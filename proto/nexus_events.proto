@@ -1,0 +1,42 @@
+syntax = "proto3";
+
+package nexuscore;
+
+option go_package = "github.com/V-Tube-Entertainment/NexusCore/api/proto";
+
+// NexusEventStream provides real-time event broadcasting to connected servers.
+service NexusEventStream {
+    rpc Subscribe(SubscribeRequest) returns (stream NexusEvent);
+}
+
+message SubscribeRequest {
+    string network_id = 1;
+    string server_name = 2;
+    string server_type = 3; // VELOCITY, PAPER, FOLIA, SPONGE, NEOFORGE, FABRIC
+}
+
+message NexusEvent {
+    string event_type = 1;   // e.g. "punishment.create", "chat.message", "queue.admit"
+    string network_id = 2;
+    string server_name = 3;  // empty for global/network-scoped events
+    bytes payload = 4;       // JSON-encoded event data
+    int64 timestamp = 5;     // Unix epoch millis
+}
+
+// Event types broadcast via stream:
+//
+// punishment.create / punishment.revoke / punishment.expire
+// chat.message
+// private_message.send
+// maintenance.start / maintenance.end / maintenance.countdown
+// announcement.broadcast
+// motd.update
+// config.update.{type} (automod_rules, chat_channels, join_messages, tab_list, etc.)
+// staff.vanish / staff.freeze
+// player.send / player.kick
+// health.alert
+// queue.admit / queue.update
+// economy.balance_update
+// notification.new
+// task.execute
+// custom.* (third-party plugin events)

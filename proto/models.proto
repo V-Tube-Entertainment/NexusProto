@@ -1,0 +1,1115 @@
+syntax = "proto3";
+
+package nexuscore;
+
+option go_package = "github.com/V-Tube-Entertainment/NexusCore/api/proto";
+
+import "google/protobuf/timestamp.proto";
+
+// ============================================================
+// Networks
+// ============================================================
+
+message Network {
+    string id = 1;
+    string display_name = 2;
+    string motd_line1 = 3;
+    string motd_line2 = 4;
+    string server_icon_base64 = 5;
+    string hover_message = 6;
+    bool maintenance_mode = 7;
+    string maintenance_motd = 8;
+    string branding_color = 9;
+    string branding_logo_url = 10;
+    string discord_webhook_url = 11;
+    google.protobuf.Timestamp created_at = 12;
+    int32 appeal_cooldown_days = 13;
+    int32 appeal_max_attempts = 14;
+    string escalation_tiers_json = 15;
+}
+
+// ============================================================
+// Staff & Permissions
+// ============================================================
+
+message PermissionGroup {
+    int32 id = 1;
+    string name = 2;
+    string permissions_json = 3;
+    google.protobuf.Timestamp created_at = 4;
+    string description = 5;
+    int32 parent_group_id = 6;
+    int32 priority = 7;
+}
+
+message StaffAccount {
+    int32 id = 1;
+    string username = 2;
+    string email = 3;
+    string minecraft_uuid = 4;
+    int32 permission_group_id = 5;
+    bool enabled = 6;
+    google.protobuf.Timestamp created_at = 7;
+    google.protobuf.Timestamp last_login = 8;
+    bool totp_enabled = 9;
+}
+
+message ApiKey {
+    int32 id = 1;
+    string name = 2;
+    int32 staff_account_id = 3;
+    string permissions_json = 4;
+    google.protobuf.Timestamp created_at = 5;
+    google.protobuf.Timestamp last_used = 6;
+    bool active = 7;
+}
+
+// ============================================================
+// Punishments
+// ============================================================
+
+message PunishmentTemplate {
+    int32 id = 1;
+    string name = 2;
+    string type = 3;
+    string reason = 4;
+    int64 duration = 5;
+    google.protobuf.Timestamp created_at = 6;
+}
+
+message Punishment {
+    int32 id = 1;
+    string type = 2;
+    string target_uuid = 3;
+    string target_name = 4;
+    string target_ip = 5;
+    string reason = 6;
+    string staff_uuid = 7;
+    string staff_name = 8;
+    int32 template_id = 9;
+    int64 duration = 10;
+    string issued_on_network = 11;
+    string issued_on_server = 12;
+    google.protobuf.Timestamp created_at = 13;
+    google.protobuf.Timestamp expires_at = 14;
+    bool active = 15;
+    string removed_by_uuid = 16;
+    string removed_by_name = 17;
+    google.protobuf.Timestamp removed_at = 18;
+    string removed_reason = 19;
+}
+
+message BanAppeal {
+    int32 id = 1;
+    int32 punishment_id = 2;
+    string appellant_uuid = 3;
+    string appellant_name = 4;
+    string appeal_text = 5;
+    string status = 6;
+    string reviewed_by_uuid = 7;
+    string reviewed_by_name = 8;
+    string review_notes = 9;
+    google.protobuf.Timestamp created_at = 10;
+    google.protobuf.Timestamp reviewed_at = 11;
+    int32 appeal_number = 12;
+    string assigned_to_uuid = 13;
+    string assigned_to_name = 14;
+    string escalation_tier = 15;
+    string escalated_by_uuid = 16;
+    string escalated_by_name = 17;
+    google.protobuf.Timestamp escalated_at = 18;
+}
+
+message AppealComment {
+    int32 id = 1;
+    int32 appeal_id = 2;
+    string sender_uuid = 3;
+    string sender_name = 4;
+    string sender_type = 5;
+    string message_text = 6;
+    google.protobuf.Timestamp created_at = 7;
+}
+
+message AppealConfig {
+    int32 cooldown_days = 1;
+    int32 max_attempts = 2;
+}
+
+// ============================================================
+// Players
+// ============================================================
+
+message PlayerProfile {
+    string uuid = 1;
+    string username = 2;
+    google.protobuf.Timestamp first_join = 3;
+    google.protobuf.Timestamp last_join = 4;
+    int64 total_play_time_seconds = 5;
+    int32 total_joins = 6;
+}
+
+message PlayerSession {
+    int64 id = 1;
+    string uuid = 2;
+    string username = 3;
+    string ip_address = 4;
+    string client_version = 5;
+    string country = 6;
+    string network_id = 7;
+    string server_name = 8;
+    string proxy_id = 9;
+    google.protobuf.Timestamp join_time = 10;
+    google.protobuf.Timestamp leave_time = 11;
+    int64 online_duration_seconds = 12;
+}
+
+message PlayerIp {
+    int64 id = 1;
+    string player_uuid = 2;
+    string ip_address = 3;
+    google.protobuf.Timestamp first_seen = 4;
+    google.protobuf.Timestamp last_seen = 5;
+}
+
+message AltLink {
+    int64 id = 1;
+    string player_uuid = 2;
+    string linked_uuid = 3;
+    string shared_ip = 4;
+    google.protobuf.Timestamp created_at = 5;
+}
+
+// ============================================================
+// Reports & Notes
+// ============================================================
+
+message Report {
+    int32 id = 1;
+    string reporter_uuid = 2;
+    string reporter_name = 3;
+    string target_uuid = 4;
+    string target_name = 5;
+    string reason = 6;
+    string status = 7;
+    string claimed_by_uuid = 8;
+    string resolved_by_uuid = 9;
+    string network_id = 10;
+    string server_name = 11;
+    google.protobuf.Timestamp created_at = 12;
+    google.protobuf.Timestamp updated_at = 13;
+}
+
+message PlayerNote {
+    int32 id = 1;
+    string target_uuid = 2;
+    string target_name = 3;
+    string note_text = 4;
+    string staff_uuid = 5;
+    string staff_name = 6;
+    google.protobuf.Timestamp created_at = 7;
+}
+
+// ============================================================
+// Tickets
+// ============================================================
+
+message Ticket {
+    int32 id = 1;
+    string creator_uuid = 2;
+    string creator_name = 3;
+    string network_id = 4;
+    string server_name = 5;
+    string subject = 6;
+    string status = 7;
+    string priority = 8;
+    string assigned_staff_uuid = 9;
+    google.protobuf.Timestamp created_at = 10;
+    google.protobuf.Timestamp updated_at = 11;
+    google.protobuf.Timestamp closed_at = 12;
+    int32 category_id = 13;
+    string category_name = 14;
+    string assigned_staff_name = 15;
+    repeated TicketTag tags = 16;
+    google.protobuf.Timestamp first_response_at = 17;
+    int32 auto_close_days = 18;
+}
+
+message TicketMessage {
+    int32 id = 1;
+    int32 ticket_id = 2;
+    string sender_uuid = 3;
+    string sender_name = 4;
+    string sender_type = 5;
+    string message_text = 6;
+    google.protobuf.Timestamp created_at = 7;
+}
+
+message TicketCategory {
+    int32 id = 1;
+    string network_id = 2;
+    string name = 3;
+    string description = 4;
+    string icon = 5;
+    int32 sort_order = 6;
+    bool enabled = 7;
+    bool is_default = 8;
+    google.protobuf.Timestamp created_at = 9;
+}
+
+message TicketNote {
+    int32 id = 1;
+    int32 ticket_id = 2;
+    string author_uuid = 3;
+    string author_name = 4;
+    string note_text = 5;
+    google.protobuf.Timestamp created_at = 6;
+}
+
+message TicketTag {
+    int32 id = 1;
+    string network_id = 2;
+    string name = 3;
+    string color = 4;
+    google.protobuf.Timestamp created_at = 5;
+}
+
+// ============================================================
+// Chat
+// ============================================================
+
+message ChatChannel {
+    int32 id = 1;
+    string network_id = 2;
+    string name = 3;
+    string display_name = 4;
+    string prefix = 5;
+    string color = 6;
+    string scope = 7;
+    int32 radius_blocks = 8;
+    string format = 9;
+    string permission_read = 10;
+    string permission_write = 11;
+    int32 cooldown_seconds = 12;
+    bool enabled = 13;
+    int32 sort_order = 14;
+    bool is_default = 15;
+    google.protobuf.Timestamp created_at = 16;
+    int32 slow_mode_seconds = 17;
+}
+
+message ChatWebhook {
+    int64 id = 1;
+    string network_id = 2;
+    string channel_name = 3;
+    string webhook_url = 4;
+    string format = 5;
+    bool enabled = 6;
+    google.protobuf.Timestamp created_at = 7;
+}
+
+message ChatLogEntry {
+    int64 id = 1;
+    int32 channel_id = 2;
+    string sender_uuid = 3;
+    string sender_name = 4;
+    string network_id = 5;
+    string server_name = 6;
+    string message_text = 7;
+    bool filtered = 8;
+    google.protobuf.Timestamp created_at = 9;
+    bool deleted = 10;
+    string deleted_by = 11;
+    google.protobuf.Timestamp deleted_at = 12;
+    string deleted_reason = 13;
+}
+
+message PlayerChatSettings {
+    string uuid = 1;
+    int32 active_channel_id = 2;
+    string muted_channels_json = 3;
+    bool spy_mode = 4;
+    string nickname = 5;
+    string chat_color = 6;
+}
+
+message PrivateMessage {
+    int64 id = 1;
+    string sender_uuid = 2;
+    string sender_name = 3;
+    string recipient_uuid = 4;
+    string recipient_name = 5;
+    string message_text = 6;
+    string network_id = 7;
+    string server_name = 8;
+    bool read = 9;
+    google.protobuf.Timestamp created_at = 10;
+}
+
+message PlayerIgnore {
+    int64 id = 1;
+    string player_uuid = 2;
+    string ignored_uuid = 3;
+    string network_id = 4;
+    google.protobuf.Timestamp created_at = 5;
+}
+
+message PlayerMail {
+    int64 id = 1;
+    string sender_uuid = 2;
+    string sender_name = 3;
+    string recipient_uuid = 4;
+    string recipient_name = 5;
+    string message = 6;
+    string network_id = 7;
+    bool read = 8;
+    google.protobuf.Timestamp created_at = 9;
+}
+
+// ============================================================
+// Announcements & Maintenance
+// ============================================================
+
+message Announcement {
+    int32 id = 1;
+    string network_id = 2;
+    string title = 3;
+    string message = 4;
+    string type = 5;
+    string schedule_type = 6;
+    google.protobuf.Timestamp scheduled_at = 7;
+    int32 repeat_interval_seconds = 8;
+    bool enabled = 9;
+    repeated string target_servers = 13;
+    repeated int64 target_groups = 17;
+    google.protobuf.Timestamp expires_at = 14;
+    string required_permission = 15;
+    int32 min_player_count = 16;
+    string created_by_uuid = 10;
+    google.protobuf.Timestamp created_at = 11;
+    google.protobuf.Timestamp updated_at = 12;
+}
+
+message AnnouncementLog {
+    int64 id = 1;
+    int64 announcement_id = 2;
+    google.protobuf.Timestamp sent_at = 3;
+    int32 recipient_count = 4;
+}
+
+message MaintenanceWindow {
+    int32 id = 1;
+    string network_id = 2;
+    google.protobuf.Timestamp start_time = 3;
+    google.protobuf.Timestamp end_time = 4;
+    string reason = 5;
+    string countdown_message = 6;
+    string kick_message = 7;
+    google.protobuf.Timestamp created_at = 8;
+    string scope = 9;          // NETWORK | GROUP | SERVER
+    int64 target_id = 10;      // group_id or managed_server_id; 0 for NETWORK
+    bool started = 11;
+    bool ended = 12;
+    google.protobuf.Timestamp updated_at = 13;
+}
+
+// ============================================================
+// Automod
+// ============================================================
+
+message AutomodRule {
+    int32 id = 1;
+    string network_id = 2;
+    string name = 3;
+    string trigger_type = 4;
+    string action_type = 5;
+    int64 action_duration = 6;
+    bool enabled = 7;
+    int32 priority = 8;
+    google.protobuf.Timestamp created_at = 9;
+    string escalation_tiers_json = 10;
+}
+
+message AutomodTrigger {
+    int32 id = 1;
+    int32 rule_id = 2;
+    string trigger_value = 3;
+    bool case_sensitive = 4;
+    google.protobuf.Timestamp created_at = 5;
+}
+
+// ============================================================
+// Join/Leave, Tab List
+// ============================================================
+
+message JoinLeaveConfig {
+    int32 id = 1;
+    string network_id = 2;
+    string join_message = 3;
+    string leave_message = 4;
+    string first_join_message = 5;
+    bool enabled = 6;
+}
+
+message FirstJoinAction {
+    int32 id = 1;
+    string network_id = 2;
+    string action_type = 3;
+    string action_value = 4;
+    int32 sort_order = 5;
+}
+
+message TabListConfig {
+    int32 id = 1;
+    string network_id = 2;
+    string header = 3;
+    string footer = 4;
+    int32 update_interval_seconds = 5;
+    string sort_mode = 6;           // ALPHABETICAL, SERVER_GROUPED, GROUP_RANKED
+    string player_format = 7;       // MiniMessage format for player names in the list
+    bool hide_vanished = 8;         // hide vanished staff from non-staff players
+    string group_weights_json = 9;  // JSON object mapping group name -> sort weight, e.g. {"owner":100,"admin":90}
+    string server_name = 10;        // empty = network default; non-empty = per-server override
+}
+
+// ============================================================
+// Staff State
+// ============================================================
+
+message StaffState {
+    int32 id = 1;
+    string staff_uuid = 2;
+    string network_id = 3;
+    string server_name = 4;
+    bool vanish = 5;
+    bool god_mode = 6;
+    string frozen_target_uuid = 7;
+    google.protobuf.Timestamp last_activity = 8;
+}
+
+// ============================================================
+// Audit Log
+// ============================================================
+
+message AuditLogEntry {
+    int64 id = 1;
+    string action_type = 2;
+    string actor_uuid = 3;
+    string actor_name = 4;
+    string target_uuid = 5;
+    string target_name = 6;
+    string details = 7;
+    string ip_address = 8;
+    string network_id = 9;
+    string server_name = 10;
+    google.protobuf.Timestamp created_at = 11;
+}
+
+// ============================================================
+// Webhooks
+// ============================================================
+
+message WebhookEndpoint {
+    int32 id = 1;
+    string url = 2;
+    string event_types_json = 3;
+    string network_id = 4;
+    bool active = 5;
+    int32 consecutive_failures = 6;
+    google.protobuf.Timestamp created_at = 7;
+}
+
+message WebhookDelivery {
+    int64 id = 1;
+    int32 endpoint_id = 2;
+    string event_type = 3;
+    string payload_json = 4;
+    string status = 5;
+    int32 http_status = 6;
+    string response_body = 7;
+    int32 attempt = 8;
+    google.protobuf.Timestamp created_at = 9;
+}
+
+// ============================================================
+// Data Retention & GDPR
+// ============================================================
+
+message DataRetentionPolicy {
+    int32 id = 1;
+    string table_name = 2;
+    int32 retention_days = 3;
+    string action = 4;
+    bool enabled = 5;
+    google.protobuf.Timestamp last_run_at = 6;
+}
+
+message DataDeletionRequest {
+    int32 id = 1;
+    string player_uuid = 2;
+    string request_type = 3;
+    string status = 4;
+    string requested_by = 5;
+    google.protobuf.Timestamp completed_at = 6;
+    google.protobuf.Timestamp created_at = 7;
+}
+
+// ============================================================
+// Server Health
+// ============================================================
+
+message ServerHeartbeat {
+    string server_name = 1;
+    string network_id = 2;
+    string server_type = 3;
+    float tps = 4;
+    float mspt = 5;
+    float cpu_percent = 6;
+    int32 memory_used_mb = 7;
+    int32 memory_max_mb = 8;
+    int32 player_count = 9;
+    int64 uptime_seconds = 10;
+    bool online = 11;
+    google.protobuf.Timestamp last_heartbeat_at = 12;
+    string pelican_server_id = 13;
+}
+
+message ServerHealthLog {
+    int64 id = 1;
+    string server_name = 2;
+    string network_id = 3;
+    float tps = 4;
+    float mspt = 5;
+    float cpu_percent = 6;
+    int32 memory_used_mb = 7;
+    int32 player_count = 8;
+    google.protobuf.Timestamp recorded_at = 9;
+}
+
+message HealthAlertRule {
+    int32 id = 1;
+    string network_id = 2;
+    string metric = 3;
+    float warning_threshold = 4;
+    float critical_threshold = 5;
+    string action = 6;
+    bool enabled = 7;
+    google.protobuf.Timestamp created_at = 8;
+}
+
+message HealthAlert {
+    int32 id = 1;
+    string server_name = 2;
+    string network_id = 3;
+    int32 rule_id = 4;
+    string severity = 5;
+    string metric = 6;
+    float value = 7;
+    string message = 8;
+    bool acknowledged = 9;
+    google.protobuf.Timestamp created_at = 10;
+}
+
+// ============================================================
+// Queue System
+// ============================================================
+
+message QueueConfig {
+    int32 id = 1;
+    string network_id = 2;
+    bool enabled = 3;
+    int32 max_players = 4;
+    string queue_message = 5;
+    string priority_groups_json = 6;
+    string bypass_permission = 7;
+    string server_name = 8;
+}
+
+message QueueEntry {
+    int32 id = 1;
+    string uuid = 2;
+    string username = 3;
+    string network_id = 4;
+    int32 priority_weight = 5;
+    int32 position = 6;
+    google.protobuf.Timestamp joined_queue_at = 7;
+    google.protobuf.Timestamp admitted_at = 8;
+    string status = 9;
+    string server_name = 10;
+    int32 estimated_wait_seconds = 11;
+}
+
+// ============================================================
+// Routing
+// ============================================================
+
+message RoutingRule {
+    int32 id = 1;
+    string network_id = 2;
+    string rule_type = 3;
+    int32 priority = 4;
+    string condition_json = 5;
+    string target_server = 6;
+    bool enabled = 7;
+    google.protobuf.Timestamp created_at = 8;
+    int64 target_group_id = 9; // 0 when unset; resolves to a server from the group
+}
+
+// ============================================================
+// Economy
+// ============================================================
+
+message Currency {
+    int32 id = 1;
+    string code = 2;
+    string display_name = 3;
+    string symbol = 4;
+    int32 decimal_places = 5;
+    string network_id = 6;
+    string server_scope_json = 7;
+    bool tradeable = 8;
+    double initial_balance = 9;
+    double max_balance = 10;
+    bool enabled = 11;
+    google.protobuf.Timestamp created_at = 12;
+    string permission_node = 13;
+    string visibility = 14;           // PUBLIC, PERMISSION_ONLY, HIDDEN
+    CurrencyType currency_type = 15;
+    string type_config_json = 16;
+}
+
+enum CurrencyType {
+    VIRTUAL = 0;
+    ITEM = 1;
+    EXPERIENCE = 2;
+    EXPERIENCE_LEVEL = 3;
+}
+
+message MoneyNote {
+    int64 id = 1;
+    string note_id = 2;
+    string uuid = 3;
+    int32 currency_id = 4;
+    double amount = 5;
+    string status = 6;                // ACTIVE, REDEEMED, EXPIRED, CANCELLED
+    google.protobuf.Timestamp created_at = 7;
+    string redeemed_by_uuid = 8;
+    google.protobuf.Timestamp redeemed_at = 9;
+    google.protobuf.Timestamp expires_at = 10;
+}
+
+message BankAccount {
+    int64 id = 1;
+    string name = 2;
+    string account_type = 3;          // PERSONAL, SHARED, ADMIN
+    string owner_uuid = 4;
+    int32 currency_id = 5;
+    double balance = 6;
+    double interest_rate = 7;
+    string network_id = 8;
+    google.protobuf.Timestamp created_at = 9;
+    google.protobuf.Timestamp last_interest_at = 10;
+    bool frozen = 11;
+}
+
+message BankAccountMember {
+    int64 id = 1;
+    int64 bank_account_id = 2;
+    string uuid = 3;
+    string role = 4;                  // OWNER, MANAGER, MEMBER
+    bool can_deposit = 5;
+    bool can_withdraw = 6;
+    bool can_view_balance = 7;
+    bool can_manage_members = 8;
+    google.protobuf.Timestamp joined_at = 9;
+}
+
+message BankTransaction {
+    int64 id = 1;
+    int64 bank_account_id = 2;
+    string uuid = 3;
+    double amount = 4;
+    double balance_after = 5;
+    string transaction_type = 6;      // DEPOSIT, WITHDRAW, INTEREST, TRANSFER, ADMIN_SET
+    string description = 7;
+    google.protobuf.Timestamp created_at = 8;
+}
+
+message TaxConfig {
+    int32 id = 1;
+    string network_id = 2;
+    int32 currency_id = 3;
+    string tax_type = 4;              // PAY, SHOP, AUCTION, EXCHANGE
+    double tax_percent = 5;
+    string treasury_type = 6;         // VOID, ACCOUNT
+    int64 treasury_bank_account_id = 7;
+    bool enabled = 8;
+    google.protobuf.Timestamp created_at = 9;
+}
+
+message TransactionLimit {
+    int32 id = 1;
+    int32 currency_id = 2;
+    string limit_type = 3;            // DAILY, HOURLY
+    double max_amount = 4;
+    string applies_to = 5;            // ALL, PAY, SHOP, AUCTION
+    string permission_bypass = 6;
+    bool enabled = 7;
+}
+
+message Shop {
+    int64 id = 1;
+    string name = 2;
+    string shop_type = 3;             // ADMIN, PLAYER
+    string owner_uuid = 4;
+    int32 currency_id = 5;
+    string network_id = 6;
+    string server_name = 7;
+    string location_json = 8;
+    bool enabled = 9;
+    google.protobuf.Timestamp created_at = 10;
+}
+
+message ShopItem {
+    int64 id = 1;
+    int64 shop_id = 2;
+    string material = 3;
+    string item_meta_json = 4;
+    double buy_price = 5;
+    double sell_price = 6;
+    int32 stock = 7;                  // -1 = unlimited
+    int32 max_stock = 8;
+    bool enabled = 9;
+}
+
+message AuctionListing {
+    int64 id = 1;
+    string seller_uuid = 2;
+    int32 currency_id = 3;
+    string material = 4;
+    string item_meta_json = 5;
+    int32 quantity = 6;
+    double starting_price = 7;
+    double buy_now_price = 8;
+    double current_bid = 9;
+    string current_bidder_uuid = 10;
+    string status = 11;               // ACTIVE, SOLD, EXPIRED, CANCELLED
+    string network_id = 12;
+    google.protobuf.Timestamp created_at = 13;
+    google.protobuf.Timestamp expires_at = 14;
+}
+
+message AuctionBid {
+    int64 id = 1;
+    int64 listing_id = 2;
+    string bidder_uuid = 3;
+    double bid_amount = 4;
+    google.protobuf.Timestamp created_at = 5;
+}
+
+message PlayerBalance {
+    int64 id = 1;
+    string uuid = 2;
+    int32 currency_id = 3;
+    double balance = 4;
+    google.protobuf.Timestamp last_updated = 5;
+}
+
+message EconomyTransaction {
+    int64 id = 1;
+    string uuid = 2;
+    int32 currency_id = 3;
+    double amount = 4;
+    double balance_after = 5;
+    string transaction_type = 6;
+    string source_description = 7;
+    string source_server = 8;
+    string initiated_by_uuid = 9;
+    google.protobuf.Timestamp created_at = 10;
+}
+
+message CurrencyExchangeRate {
+    int32 id = 1;
+    int32 from_currency_id = 2;
+    int32 to_currency_id = 3;
+    double rate = 4;
+    double fee_percent = 5;
+    bool enabled = 6;
+    google.protobuf.Timestamp created_at = 7;
+}
+
+// ============================================================
+// Notifications
+// ============================================================
+
+message NotificationPreferences {
+    string staff_uuid = 1;
+    string prefs_json = 2;
+    string discord_dm_webhook_url = 3;
+    string email = 4;
+}
+
+message Notification {
+    int64 id = 1;
+    string recipient_uuid = 2;
+    string event_type = 3;
+    string title = 4;
+    string message = 5;
+    string link = 6;
+    string metadata_json = 7;
+    bool read = 8;
+    bool delivered_in_game = 9;
+    bool delivered_discord = 10;
+    bool delivered_web_push = 11;
+    google.protobuf.Timestamp created_at = 12;
+}
+
+// ============================================================
+// Scheduled Tasks
+// ============================================================
+
+message ScheduledTask {
+    int32 id = 1;
+    string name = 2;
+    string network_id = 3;
+    string target_scope = 4;
+    string target_server_name = 5;
+    string command = 6;
+    string schedule_type = 7;
+    string cron_expression = 8;
+    int32 interval_seconds = 9;
+    google.protobuf.Timestamp next_run_at = 10;
+    google.protobuf.Timestamp one_time_at = 11;
+    string timezone = 12;
+    bool enabled = 13;
+    string run_as = 14;
+    string run_as_player_uuid = 15;
+    string created_by_uuid = 16;
+    string created_by_name = 17;
+    google.protobuf.Timestamp created_at = 18;
+}
+
+message TaskExecutionResult {
+    int64 id = 1;
+    int32 task_id = 2;
+    string target_server_name = 3;
+    string command_executed = 4;
+    string status = 5;
+    string response_message = 6;
+    google.protobuf.Timestamp started_at = 7;
+    google.protobuf.Timestamp completed_at = 8;
+}
+
+// ============================================================
+// Plugin API
+// ============================================================
+
+message CustomData {
+    int64 id = 1;
+    string namespace = 2;
+    string key = 3;
+    string value = 4;
+    string scope = 5;
+    string scope_id = 6;
+}
+
+message ManagedServer {
+    int64 id = 1;
+    string network_id = 2;
+    string name = 3;
+    string server_type = 4;
+    string host = 5;
+    int32 port = 6;
+    string description = 7;
+    int64 api_key_id = 8;
+    google.protobuf.Timestamp created_at = 9;
+    google.protobuf.Timestamp updated_at = 10;
+    repeated int64 group_ids = 11;
+    bool maintenance_mode = 12;
+    string maintenance_reason = 13;
+    string default_currency_code = 14;
+}
+
+message ServerGroup {
+    int64 id = 1;
+    string network_id = 2;
+    string name = 3;
+    string description = 4;
+    bool is_default = 5;
+    repeated int64 member_ids = 6;
+    google.protobuf.Timestamp created_at = 7;
+    google.protobuf.Timestamp updated_at = 8;
+    bool maintenance_mode = 9;
+    string maintenance_reason = 10;
+    string load_balance_strategy = 11;
+    int32 max_players = 12;
+}
+
+message ServerGroupMember {
+    int64 group_id = 1;
+    int64 managed_server_id = 2;
+    int32 weight = 3;
+    string server_name = 4;
+}
+
+message RegisteredPlugin {
+    int32 id = 1;
+    string namespace = 2;
+    string display_name = 3;
+    string version = 4;
+    string description = 5;
+    string registered_permissions_json = 6;
+    string server_name = 7;
+    google.protobuf.Timestamp registered_at = 8;
+    google.protobuf.Timestamp last_heartbeat = 9;
+}
+
+// ============================================================
+// Static Content
+// ============================================================
+
+message StaticPage {
+    int32 id = 1;
+    string slug = 2;
+    string title = 3;
+    string content = 4;
+    bool published = 5;
+    google.protobuf.Timestamp created_at = 6;
+}
+
+message StaffTeamDisplayEntry {
+    int32 id = 1;
+    int32 staff_account_id = 2;
+    string display_name = 3;
+    string role = 4;
+    int32 sort_order = 5;
+    bool visible = 6;
+    string color = 7;
+    string badge_url = 8;
+    string bio = 9;
+    string timezone = 10;
+    string availability = 11;
+    string avatar_url = 12;
+}
+
+// ============================================================
+// Staff Permission Overrides
+// ============================================================
+
+message StaffPermissionOverride {
+    int64 id = 1;
+    int64 staff_account_id = 2;
+    string permission = 3;
+    bool granted = 4;
+    string network_id = 5;
+    string server_name = 6;
+    google.protobuf.Timestamp expires_at = 7;
+    int64 granted_by_staff_id = 8;
+    string reason = 9;
+    google.protobuf.Timestamp created_at = 10;
+}
+
+// ============================================================
+// Permission Registry
+// ============================================================
+
+message PermissionRegistryEntry {
+    int32 id = 1;
+    string permission = 2;
+    string description = 3;
+    string category = 4;
+    google.protobuf.Timestamp created_at = 5;
+}
+
+// ============================================================
+// Staff Sessions & Activity
+// ============================================================
+
+message StaffLoginSession {
+    int64 id = 1;
+    int64 staff_account_id = 2;
+    string ip_address = 3;
+    string user_agent = 4;
+    google.protobuf.Timestamp login_at = 5;
+    google.protobuf.Timestamp logout_at = 6;
+    google.protobuf.Timestamp last_activity = 7;
+    int64 duration_seconds = 8;
+    bool is_active = 9;
+    string login_method = 10;
+    google.protobuf.Timestamp created_at = 11;
+}
+
+message StaffActivityLogEntry {
+    int64 id = 1;
+    int64 staff_account_id = 2;
+    int64 session_id = 3;
+    string action_type = 4;
+    string resource_path = 5;
+    string network_id = 6;
+    string server_name = 7;
+    string details = 8;
+    string ip_address = 9;
+    google.protobuf.Timestamp created_at = 10;
+}
+
+// ============================================================
+// Effective Permissions
+// ============================================================
+
+message EffectivePermissions {
+    repeated string granted = 1;
+    repeated string denied = 2;
+}
+
+message ContributorRole {
+    int32 id = 1;
+    string name = 2;
+    string description = 3;
+    string color = 4;
+    int32 sort_order = 5;
+    bool visible = 6;
+    google.protobuf.Timestamp created_at = 7;
+    google.protobuf.Timestamp updated_at = 8;
+}
+
+message ContributorRoleMember {
+    int32 id = 1;
+    int32 role_id = 2;
+    string player_uuid = 3;
+    string display_name = 4;
+    int32 staff_account_id = 5;
+    string notes = 6;
+    int32 sort_order = 7;
+    google.protobuf.Timestamp created_at = 8;
+    google.protobuf.Timestamp updated_at = 9;
+}
+
+message ContributorRoleWithMembers {
+    ContributorRole role = 1;
+    repeated ContributorRoleMember members = 2;
+}
+
+message LeaderboardConfig {
+    int32 id = 1;
+    string network_id = 2;
+    string name = 3;
+    string metric = 4;
+    string display_name = 5;
+    bool enabled = 6;
+    int32 cache_ttl_seconds = 7;
+}
+
+// ============================================================
+// Common / Utility
+// ============================================================
+
+message Empty {}
+
+message PaginationRequest {
+    int32 page_size = 1;
+    string page_token = 2;
+}
+
+message PaginationResponse {
+    string next_page_token = 1;
+    int32 total_count = 2;
+}

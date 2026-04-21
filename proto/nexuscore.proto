@@ -1,0 +1,1902 @@
+syntax = "proto3";
+
+package nexuscore;
+
+option go_package = "github.com/V-Tube-Entertainment/NexusCore/api/proto";
+
+import "google/protobuf/timestamp.proto";
+import "proto/models.proto";
+
+// ============================================================
+// NexusService — Main RPC Service
+// ============================================================
+
+service NexusService {
+    // --- Registration ---
+    rpc Register(RegisterRequest) returns (RegisterResponse);
+    rpc Heartbeat(stream HeartbeatRequest) returns (stream HeartbeatResponse);
+
+    // --- Punishments ---
+    rpc CheckBan(CheckBanRequest) returns (CheckBanResponse);
+    rpc CheckMute(CheckMuteRequest) returns (CheckMuteResponse);
+    rpc GetPunishment(GetPunishmentRequest) returns (PunishmentResponse);
+    rpc ListPunishments(ListPunishmentsRequest) returns (ListPunishmentsResponse);
+    rpc CreatePunishment(CreatePunishmentRequest) returns (PunishmentResponse);
+    rpc UpdatePunishment(UpdatePunishmentRequest) returns (PunishmentResponse);
+    rpc RevokePunishment(RevokePunishmentRequest) returns (PunishmentResponse);
+    rpc GetPlayerHistory(PlayerHistoryRequest) returns (PlayerHistoryResponse);
+    rpc CreateTemplate(CreateTemplateRequest) returns (PunishmentTemplate);
+    rpc ListTemplates(ListTemplatesRequest) returns (ListTemplatesResponse);
+    rpc DeleteTemplate(DeleteTemplateRequest) returns (Empty);
+    rpc CreateAppeal(CreateAppealRequest) returns (BanAppeal);
+    rpc ReviewAppeal(ReviewAppealRequest) returns (BanAppeal);
+    rpc ListAppeals(ListAppealsRequest) returns (ListAppealsResponse);
+    rpc EscalateAppeal(EscalateAppealRequest) returns (BanAppeal);
+    rpc AssignAppeal(AssignAppealRequest) returns (BanAppeal);
+    rpc AddAppealComment(AddAppealCommentRequest) returns (AppealComment);
+    rpc ListAppealComments(ListAppealCommentsRequest) returns (ListAppealCommentsResponse);
+    rpc GetAppealConfig(GetAppealConfigRequest) returns (AppealConfig);
+
+    // --- Sessions ---
+    rpc PlayerJoin(PlayerJoinRequest) returns (PlayerJoinResponse);
+    rpc PlayerLeave(PlayerLeaveRequest) returns (Empty);
+    rpc PlayerServerSwitch(ServerSwitchRequest) returns (Empty);
+
+    // --- Chat ---
+    rpc SendChatMessage(ChatMessageRequest) returns (ChatMessageResponse);
+    rpc SendPrivateMessage(PrivateMessageRequest) returns (PrivateMessageResponse);
+    rpc GetChannels(GetChannelsRequest) returns (GetChannelsResponse);
+    rpc CreateChannel(CreateChannelRequest) returns (ChatChannel);
+    rpc UpdateChannel(UpdateChannelRequest) returns (ChatChannel);
+    rpc DeleteChannel(DeleteChannelRequest) returns (Empty);
+    rpc GetChatLog(GetChatLogRequest) returns (GetChatLogResponse);
+    rpc GetPrivateMessages(GetPrivateMessagesRequest) returns (GetPrivateMessagesResponse);
+    rpc GetPlayerChatSettings(GetPlayerChatSettingsRequest) returns (PlayerChatSettings);
+    rpc UpdatePlayerChatSettings(UpdatePlayerChatSettingsRequest) returns (PlayerChatSettings);
+    rpc EvaluateAutomod(EvaluateAutomodRequest) returns (EvaluateAutomodResponse);
+
+    // --- Chat Webhooks ---
+    rpc ListChatWebhooks(ListChatWebhooksRequest) returns (ListChatWebhooksResponse);
+    rpc CreateChatWebhook(CreateChatWebhookRequest) returns (ChatWebhook);
+    rpc UpdateChatWebhook(UpdateChatWebhookRequest) returns (ChatWebhook);
+    rpc DeleteChatWebhook(DeleteChatWebhookRequest) returns (Empty);
+
+    // --- Chat Moderation ---
+    rpc DeleteChatMessage(DeleteChatMessageRequest) returns (ChatLogEntry);
+    rpc GetChatAnalytics(GetChatAnalyticsRequest) returns (GetChatAnalyticsResponse);
+
+    // --- Ignore List ---
+    rpc AddIgnore(AddIgnoreRequest) returns (PlayerIgnore);
+    rpc RemoveIgnore(RemoveIgnoreRequest) returns (Empty);
+    rpc ListIgnores(ListIgnoresRequest) returns (ListIgnoresResponse);
+    rpc LoadIgnoreList(LoadIgnoreListRequest) returns (LoadIgnoreListResponse);
+
+    // --- Player Mail ---
+    rpc SendMail(SendMailRequest) returns (PlayerMail);
+    rpc GetMail(GetMailRequest) returns (GetMailResponse);
+    rpc MarkMailRead(MarkMailReadRequest) returns (Empty);
+    rpc DeleteMail(DeleteMailRequest) returns (Empty);
+    rpc ClearReadMail(ClearReadMailRequest) returns (Empty);
+    rpc GetUnreadMailCount(GetUnreadMailCountRequest) returns (GetUnreadMailCountResponse);
+
+    // --- Tickets ---
+    rpc CreateTicket(CreateTicketRequest) returns (Ticket);
+    rpc GetTicket(GetTicketRequest) returns (Ticket);
+    rpc ListTickets(ListTicketsRequest) returns (ListTicketsResponse);
+    rpc AddTicketMessage(AddTicketMessageRequest) returns (TicketMessage);
+    rpc ListTicketMessages(ListTicketMessagesRequest) returns (ListTicketMessagesResponse);
+    rpc AssignTicket(AssignTicketRequest) returns (Ticket);
+    rpc SetTicketPriority(SetTicketPriorityRequest) returns (Ticket);
+    rpc CloseTicket(CloseTicketRequest) returns (Ticket);
+    rpc ReopenTicket(ReopenTicketRequest) returns (Ticket);
+    rpc SetTicketCategory(SetTicketCategoryRequest) returns (Ticket);
+
+    // --- Ticket Categories ---
+    rpc ListTicketCategories(ListTicketCategoriesRequest) returns (ListTicketCategoriesResponse);
+    rpc CreateTicketCategory(CreateTicketCategoryRequest) returns (TicketCategory);
+    rpc UpdateTicketCategory(UpdateTicketCategoryRequest) returns (TicketCategory);
+    rpc DeleteTicketCategory(DeleteTicketCategoryRequest) returns (Empty);
+    rpc SeedDefaultCategories(SeedDefaultCategoriesRequest) returns (ListTicketCategoriesResponse);
+
+    // --- Ticket Notes (staff-only) ---
+    rpc AddTicketNote(AddTicketNoteRequest) returns (TicketNote);
+    rpc ListTicketNotes(ListTicketNotesRequest) returns (ListTicketNotesResponse);
+
+    // --- Ticket Tags ---
+    rpc ListTicketTags(ListTicketTagsRequest) returns (ListTicketTagsResponse);
+    rpc CreateTicketTag(CreateTicketTagRequest) returns (TicketTag);
+    rpc DeleteTicketTag(DeleteTicketTagRequest) returns (Empty);
+    rpc AddTicketTagAssignment(AddTicketTagAssignmentRequest) returns (Empty);
+    rpc RemoveTicketTagAssignment(RemoveTicketTagAssignmentRequest) returns (Empty);
+
+    // --- Reports & Notes ---
+    rpc CreateReport(CreateReportRequest) returns (Report);
+    rpc ListReports(ListReportsRequest) returns (ListReportsResponse);
+    rpc ClaimReport(ClaimReportRequest) returns (Report);
+    rpc ResolveReport(ResolveReportRequest) returns (Report);
+    rpc CreateNote(CreateNoteRequest) returns (PlayerNote);
+    rpc GetNotes(GetNotesRequest) returns (GetNotesResponse);
+    rpc DeleteNote(DeleteNoteRequest) returns (Empty);
+
+    // --- Staff ---
+    rpc CreateStaffAccount(CreateStaffAccountRequest) returns (StaffAccount);
+    rpc UpdateStaffAccount(UpdateStaffAccountRequest) returns (StaffAccount);
+    rpc DeleteStaffAccount(DeleteStaffAccountRequest) returns (Empty);
+    rpc ListStaff(ListStaffRequest) returns (ListStaffResponse);
+    rpc GetStaffByUuid(GetStaffByUuidRequest) returns (StaffAccount);
+    rpc CreatePermissionGroup(CreatePermissionGroupRequest) returns (PermissionGroup);
+    rpc UpdatePermissionGroup(UpdatePermissionGroupRequest) returns (PermissionGroup);
+    rpc DeletePermissionGroup(DeletePermissionGroupRequest) returns (Empty);
+    rpc ListPermissionGroups(ListPermissionGroupsRequest) returns (ListPermissionGroupsResponse);
+    rpc SetVanish(SetVanishRequest) returns (StaffState);
+    rpc SetGodMode(SetGodModeRequest) returns (StaffState);
+    rpc GetStaffState(GetStaffStateRequest) returns (StaffState);
+    rpc IsVanished(IsVanishedRequest) returns (IsVanishedResponse);
+    rpc ListStaffTeamDisplay(ListStaffTeamDisplayRequest) returns (ListStaffTeamDisplayResponse);
+    rpc UpdateStaffTeamDisplay(UpdateStaffTeamDisplayRequest) returns (StaffTeamDisplayEntry);
+
+    // --- Permission Overrides ---
+    rpc ListPermissionOverrides(ListPermissionOverridesRequest) returns (ListPermissionOverridesResponse);
+    rpc AddPermissionOverride(AddPermissionOverrideRequest) returns (StaffPermissionOverride);
+    rpc RemovePermissionOverride(RemovePermissionOverrideRequest) returns (Empty);
+
+    // --- Effective Permissions ---
+    rpc GetEffectivePermissions(GetEffectivePermissionsRequest) returns (EffectivePermissions);
+
+    // --- Permission Registry ---
+    rpc ListPermissionRegistry(ListPermissionRegistryRequest) returns (ListPermissionRegistryResponse);
+
+    // --- Staff Sessions ---
+    rpc ListStaffSessions(ListStaffSessionsRequest) returns (ListStaffSessionsResponse);
+    rpc RevokeStaffSession(RevokeStaffSessionRequest) returns (Empty);
+
+    // --- Staff Activity ---
+    rpc ListStaffActivityLog(ListStaffActivityLogRequest) returns (ListStaffActivityLogResponse);
+
+    // --- Permission Audit ---
+    rpc QueryPermissionAudit(QueryPermissionAuditRequest) returns (QueryPermissionAuditResponse);
+
+    // --- 2FA ---
+    rpc Setup2FA(Setup2FARequest) returns (Setup2FAResponse);
+    rpc Verify2FA(Verify2FARequest) returns (Verify2FAResponse);
+    rpc Disable2FA(Disable2FARequest) returns (Empty);
+    rpc AuthenticateStaff2FA(AuthenticateStaff2FARequest) returns (AuthenticateStaffResponse);
+
+    // --- Contributors ---
+    rpc ListContributorRoles(ListContributorRolesRequest) returns (ListContributorRolesResponse);
+    rpc CreateContributorRole(CreateContributorRoleRequest) returns (ContributorRole);
+    rpc UpdateContributorRole(UpdateContributorRoleRequest) returns (ContributorRole);
+    rpc DeleteContributorRole(DeleteContributorRoleRequest) returns (Empty);
+    rpc ListContributorMembers(ListContributorMembersRequest) returns (ListContributorMembersResponse);
+    rpc AddContributorMember(AddContributorMemberRequest) returns (ContributorRoleMember);
+    rpc UpdateContributorMember(UpdateContributorMemberRequest) returns (ContributorRoleMember);
+    rpc RemoveContributorMember(RemoveContributorMemberRequest) returns (Empty);
+    rpc ListPublicContributors(ListPublicContributorsRequest) returns (ListPublicContributorsResponse);
+
+    // --- Managed servers ---
+    rpc ListManagedServers(ListManagedServersRequest) returns (ListManagedServersResponse);
+    rpc GetManagedServer(GetManagedServerRequest) returns (ManagedServer);
+    rpc CreateManagedServer(CreateManagedServerRequest) returns (CreateManagedServerResponse);
+    rpc UpdateManagedServer(UpdateManagedServerRequest) returns (ManagedServer);
+    rpc DeleteManagedServer(DeleteManagedServerRequest) returns (Empty);
+    rpc RotateManagedServerApiKey(RotateManagedServerApiKeyRequest) returns (RotateManagedServerApiKeyResponse);
+
+    // --- Server groups ---
+    rpc ListServerGroups(ListServerGroupsRequest) returns (ListServerGroupsResponse);
+    rpc GetServerGroup(GetServerGroupRequest) returns (ServerGroup);
+    rpc CreateServerGroup(CreateServerGroupRequest) returns (ServerGroup);
+    rpc UpdateServerGroup(UpdateServerGroupRequest) returns (ServerGroup);
+    rpc DeleteServerGroup(DeleteServerGroupRequest) returns (Empty);
+    rpc SetDefaultServerGroup(SetDefaultServerGroupRequest) returns (ServerGroup);
+    rpc AddServerToGroup(AddServerToGroupRequest) returns (Empty);
+    rpc RemoveServerFromGroup(RemoveServerFromGroupRequest) returns (Empty);
+    rpc SetMemberWeight(SetMemberWeightRequest) returns (Empty);
+    rpc ListGroupMembers(ListGroupMembersRequest) returns (ListGroupMembersResponse);
+
+    // --- Maintenance ---
+    rpc ListMaintenanceWindows(ListMaintenanceWindowsRequest) returns (ListMaintenanceWindowsResponse);
+    rpc CreateMaintenanceWindow(CreateMaintenanceWindowRequest) returns (MaintenanceWindow);
+    rpc UpdateMaintenanceWindow(UpdateMaintenanceWindowRequest) returns (MaintenanceWindow);
+    rpc DeleteMaintenanceWindow(DeleteMaintenanceWindowRequest) returns (Empty);
+    rpc SetNetworkMaintenance(SetNetworkMaintenanceRequest) returns (Empty);
+    rpc SetGroupMaintenance(SetGroupMaintenanceRequest) returns (Empty);
+    rpc SetServerMaintenance(SetServerMaintenanceRequest) returns (Empty);
+    rpc CheckMaintenance(CheckMaintenanceRequest) returns (CheckMaintenanceResponse);
+
+    // --- Announcements ---
+    rpc ListAnnouncements(ListAnnouncementsRequest) returns (ListAnnouncementsResponse);
+    rpc GetAnnouncement(GetAnnouncementRequest) returns (Announcement);
+    rpc CreateAnnouncement(CreateAnnouncementRequest) returns (Announcement);
+    rpc UpdateAnnouncement(UpdateAnnouncementRequest) returns (Announcement);
+    rpc DeleteAnnouncement(DeleteAnnouncementRequest) returns (Empty);
+    rpc SendAnnouncement(SendAnnouncementRequest) returns (Empty);
+    rpc ListAnnouncementLogs(ListAnnouncementLogsRequest) returns (ListAnnouncementLogsResponse);
+
+    // --- Service API Keys ---
+    rpc CreateServiceApiKey(CreateServiceApiKeyRequest) returns (CreateServiceApiKeyResponse);
+    rpc ListServiceApiKeys(ListServiceApiKeysRequest) returns (ListServiceApiKeysResponse);
+    rpc RevokeServiceApiKey(RevokeServiceApiKeyRequest) returns (Empty);
+
+    // --- Networks ---
+    rpc GetNetwork(GetNetworkRequest) returns (Network);
+    rpc ListNetworks(ListNetworksRequest) returns (ListNetworksResponse);
+    rpc CreateNetwork(CreateNetworkRequest) returns (Network);
+    rpc UpdateNetwork(UpdateNetworkRequest) returns (Network);
+    rpc DeleteNetwork(DeleteNetworkRequest) returns (Empty);
+    rpc GetMotd(GetMotdRequest) returns (GetMotdResponse);
+    rpc UpdateMotd(UpdateMotdRequest) returns (Network);
+
+    // --- MOTD Templates & Rotation ---
+    rpc ListMotdTemplates(ListMotdTemplatesRequest) returns (ListMotdTemplatesResponse);
+    rpc CreateMotdTemplate(CreateMotdTemplateRequest) returns (MotdTemplate);
+    rpc UpdateMotdTemplate(UpdateMotdTemplateRequest) returns (MotdTemplate);
+    rpc DeleteMotdTemplate(DeleteMotdTemplateRequest) returns (Empty);
+    rpc ApplyMotdTemplate(ApplyMotdTemplateRequest) returns (Network);
+    rpc GetMotdRotation(GetMotdRotationRequest) returns (GetMotdRotationResponse);
+    rpc UpdateMotdRotation(UpdateMotdRotationRequest) returns (GetMotdRotationResponse);
+
+    rpc GetServerStatus(GetServerStatusRequest) returns (ServerStatusResponse);
+    rpc GetOnlinePlayers(GetOnlinePlayersRequest) returns (GetOnlinePlayersResponse);
+
+    // --- Analytics ---
+    rpc GetPlayerCounts(GetPlayerCountsRequest) returns (GetPlayerCountsResponse);
+    rpc GetUniquePlayers(GetUniquePlayersRequest) returns (GetUniquePlayersResponse);
+    rpc GetVersionDistribution(GetVersionDistributionRequest) returns (DistributionResponse);
+    rpc GetCountryDistribution(GetCountryDistributionRequest) returns (DistributionResponse);
+    rpc GetPeakHours(GetPeakHoursRequest) returns (GetPeakHoursResponse);
+    rpc GetServerBreakdown(GetServerBreakdownRequest) returns (GetServerBreakdownResponse);
+    rpc GetLeaderboard(GetLeaderboardRequest) returns (GetLeaderboardResponse);
+
+    // --- Audit ---
+    rpc LogAction(LogActionRequest) returns (Empty);
+    rpc QueryAuditLog(QueryAuditLogRequest) returns (QueryAuditLogResponse);
+    rpc GetStaffActivity(GetStaffActivityRequest) returns (GetStaffActivityResponse);
+
+    // --- Config ---
+    rpc ListAutomodRules(ListAutomodRulesRequest) returns (ListAutomodRulesResponse);
+    rpc CreateAutomodRule(CreateAutomodRuleRequest) returns (AutomodRule);
+    rpc UpdateAutomodRule(UpdateAutomodRuleRequest) returns (AutomodRule);
+    rpc DeleteAutomodRule(DeleteAutomodRuleRequest) returns (Empty);
+    rpc ListAutomodTriggers(ListAutomodTriggersRequest) returns (ListAutomodTriggersResponse);
+    rpc CreateAutomodTrigger(CreateAutomodTriggerRequest) returns (AutomodTrigger);
+    rpc DeleteAutomodTrigger(DeleteAutomodTriggerRequest) returns (Empty);
+    rpc GetJoinLeaveConfig(GetJoinLeaveConfigRequest) returns (JoinLeaveConfig);
+    rpc UpdateJoinLeaveConfig(UpdateJoinLeaveConfigRequest) returns (JoinLeaveConfig);
+    rpc ListFirstJoinActions(ListFirstJoinActionsRequest) returns (ListFirstJoinActionsResponse);
+    rpc SetFirstJoinActions(SetFirstJoinActionsRequest) returns (ListFirstJoinActionsResponse);
+    rpc GetTabListConfig(GetTabListConfigRequest) returns (TabListConfig);
+    rpc UpdateTabListConfig(UpdateTabListConfigRequest) returns (TabListConfig);
+    rpc DeleteTabListConfig(DeleteTabListConfigRequest) returns (Empty);
+    rpc ListTabListConfigs(ListTabListConfigsRequest) returns (ListTabListConfigsResponse);
+    rpc CreateWebhook(CreateWebhookRequest) returns (WebhookEndpoint);
+    rpc UpdateWebhook(UpdateWebhookRequest) returns (WebhookEndpoint);
+    rpc DeleteWebhook(DeleteWebhookRequest) returns (Empty);
+    rpc ListWebhooks(ListWebhooksRequest) returns (ListWebhooksResponse);
+    rpc TestWebhook(TestWebhookRequest) returns (TestWebhookResponse);
+    rpc ListWebhookDeliveries(ListWebhookDeliveriesRequest) returns (ListWebhookDeliveriesResponse);
+    rpc GetRetentionPolicies(GetRetentionPoliciesRequest) returns (ListRetentionPoliciesResponse);
+    rpc UpdateRetentionPolicy(UpdateRetentionPolicyRequest) returns (DataRetentionPolicy);
+    rpc RunRetentionNow(RunRetentionNowRequest) returns (Empty);
+    rpc CreatePage(CreatePageRequest) returns (StaticPage);
+    rpc UpdatePage(UpdatePageRequest) returns (StaticPage);
+    rpc DeletePage(DeletePageRequest) returns (Empty);
+    rpc ListPages(ListPagesRequest) returns (ListPagesResponse);
+    rpc GetPageBySlug(GetPageBySlugRequest) returns (StaticPage);
+    rpc ListLeaderboardConfigs(ListLeaderboardConfigsRequest) returns (ListLeaderboardConfigsResponse);
+    rpc UpdateLeaderboardConfig(UpdateLeaderboardConfigRequest) returns (LeaderboardConfig);
+
+    // --- Auth ---
+    rpc AuthenticateStaff(AuthenticateStaffRequest) returns (AuthenticateStaffResponse);
+    rpc ValidateAuthCode(ValidateAuthCodeRequest) returns (ValidateAuthCodeResponse);
+    rpc ValidateMicrosoftAuth(ValidateMicrosoftAuthRequest) returns (ValidateMicrosoftAuthResponse);
+    rpc ValidateApiKey(ValidateApiKeyRequest) returns (ValidateApiKeyResponse);
+    rpc GenerateAuthCode(GenerateAuthCodeRequest) returns (GenerateAuthCodeResponse);
+
+    // --- GDPR ---
+    rpc RequestDataExport(GdprRequest) returns (GdprResponse);
+    rpc RequestDataDeletion(GdprRequest) returns (GdprResponse);
+    rpc ProcessGdprRequest(ProcessGdprRequestRequest) returns (GdprResponse);
+    rpc ListGdprRequests(ListGdprRequestsRequest) returns (ListGdprRequestsResponse);
+
+    // --- Health ---
+    rpc ReportHealthMetrics(HealthMetricsRequest) returns (Empty);
+    rpc GetServerHealth(GetServerHealthRequest) returns (ServerHeartbeat);
+    rpc ListServers(ListServersRequest) returns (ListServersResponse);
+    rpc GetHealthHistory(GetHealthHistoryRequest) returns (GetHealthHistoryResponse);
+    rpc CreateHealthAlertRule(CreateHealthAlertRuleRequest) returns (HealthAlertRule);
+    rpc UpdateHealthAlertRule(UpdateHealthAlertRuleRequest) returns (HealthAlertRule);
+    rpc ListHealthAlertRules(ListHealthAlertRulesRequest) returns (ListHealthAlertRulesResponse);
+    rpc ListHealthAlerts(ListHealthAlertsRequest) returns (ListHealthAlertsResponse);
+    rpc AcknowledgeAlert(AcknowledgeAlertRequest) returns (Empty);
+    rpc TriggerPelicanRestart(PelicanRestartRequest) returns (PelicanRestartResponse);
+
+    // --- Queue ---
+    rpc EnterQueue(EnterQueueRequest) returns (QueuePositionResponse);
+    rpc LeaveQueue(LeaveQueueRequest) returns (Empty);
+    rpc GetQueuePosition(GetQueuePositionRequest) returns (QueuePositionResponse);
+    rpc GetQueueConfig(GetQueueConfigRequest) returns (QueueConfig);
+    rpc UpdateQueueConfig(UpdateQueueConfigRequest) returns (QueueConfig);
+    rpc GetQueueStatus(GetQueueStatusRequest) returns (QueueStatusResponse);
+
+    // --- Routing ---
+    rpc GetRoutingRules(GetRoutingRulesRequest) returns (ListRoutingRulesResponse);
+    rpc CreateRoutingRule(CreateRoutingRuleRequest) returns (RoutingRule);
+    rpc UpdateRoutingRule(UpdateRoutingRuleRequest) returns (RoutingRule);
+    rpc DeleteRoutingRule(DeleteRoutingRuleRequest) returns (Empty);
+    rpc ResolveRoute(ResolveRouteRequest) returns (ResolveRouteResponse);
+
+    // --- Economy ---
+    rpc GetBalance(GetBalanceRequest) returns (BalanceResponse);
+    rpc GetAllBalances(GetAllBalancesRequest) returns (AllBalancesResponse);
+    rpc ModifyBalance(ModifyBalanceRequest) returns (BalanceResponse);
+    rpc PlayerPay(PlayerPayRequest) returns (PayResponse);
+    rpc ExchangeCurrency(ExchangeCurrencyRequest) returns (ExchangeResponse);
+    rpc GetTransactionHistory(TransactionHistoryRequest) returns (TransactionHistoryResponse);
+    rpc CreateCurrency(CreateCurrencyRequest) returns (Currency);
+    rpc UpdateCurrency(UpdateCurrencyRequest) returns (Currency);
+    rpc DeleteCurrency(DeleteCurrencyRequest) returns (Empty);
+    rpc ListCurrencies(ListCurrenciesRequest) returns (ListCurrenciesResponse);
+    rpc GetExchangeRates(GetExchangeRatesRequest) returns (ListExchangeRatesResponse);
+    rpc SetExchangeRate(SetExchangeRateRequest) returns (CurrencyExchangeRate);
+    rpc DeleteExchangeRate(DeleteExchangeRateRequest) returns (Empty);
+    rpc GetEconomyLeaderboard(EconomyLeaderboardRequest) returns (EconomyLeaderboardResponse);
+    rpc CheckCurrencyAccess(CheckCurrencyAccessRequest) returns (CheckCurrencyAccessResponse);
+
+    // --- Money Notes ---
+    rpc CreateMoneyNote(CreateMoneyNoteRequest) returns (MoneyNoteResponse);
+    rpc RedeemMoneyNote(RedeemMoneyNoteRequest) returns (RedeemMoneyNoteResponse);
+
+    // --- Banks ---
+    rpc CreateBankAccount(CreateBankAccountRequest) returns (BankAccount);
+    rpc GetBankAccount(GetBankAccountRequest) returns (BankAccount);
+    rpc ListBankAccounts(ListBankAccountsRequest) returns (ListBankAccountsResponse);
+    rpc DeleteBankAccount(DeleteBankAccountRequest) returns (Empty);
+    rpc BankDeposit(BankDepositRequest) returns (BankOperationResponse);
+    rpc BankWithdraw(BankWithdrawRequest) returns (BankOperationResponse);
+    rpc AddBankMember(AddBankMemberRequest) returns (BankAccountMember);
+    rpc RemoveBankMember(RemoveBankMemberRequest) returns (Empty);
+    rpc ListBankMembers(ListBankMembersRequest) returns (ListBankMembersResponse);
+    rpc UpdateBankMember(UpdateBankMemberRequest) returns (BankAccountMember);
+    rpc GetBankTransactionHistory(BankTransactionHistoryRequest) returns (BankTransactionHistoryResponse);
+
+    // --- Shops ---
+    rpc CreateShop(CreateShopRequest) returns (Shop);
+    rpc UpdateShop(UpdateShopRequest) returns (Shop);
+    rpc DeleteShop(DeleteShopRequest) returns (Empty);
+    rpc ListShops(ListShopsRequest) returns (ListShopsResponse);
+    rpc AddShopItem(AddShopItemRequest) returns (ShopItem);
+    rpc UpdateShopItem(UpdateShopItemRequest) returns (ShopItem);
+    rpc RemoveShopItem(RemoveShopItemRequest) returns (Empty);
+    rpc ListShopItems(ListShopItemsRequest) returns (ListShopItemsResponse);
+    rpc ShopTransact(ShopTransactRequest) returns (ShopTransactResponse);
+
+    // --- Auctions ---
+    rpc CreateAuctionListing(CreateAuctionListingRequest) returns (AuctionListing);
+    rpc PlaceAuctionBid(PlaceAuctionBidRequest) returns (AuctionOperationResponse);
+    rpc BuyNow(BuyNowRequest) returns (AuctionOperationResponse);
+    rpc CancelAuction(CancelAuctionRequest) returns (AuctionOperationResponse);
+    rpc ListAuctionListings(ListAuctionListingsRequest) returns (ListAuctionListingsResponse);
+
+    // --- Tax & Limits ---
+    rpc SetTaxConfig(SetTaxConfigRequest) returns (TaxConfig);
+    rpc ListTaxConfigs(ListTaxConfigsRequest) returns (ListTaxConfigsResponse);
+    rpc DeleteTaxConfig(DeleteTaxConfigRequest) returns (Empty);
+    rpc SetTransactionLimit(SetTransactionLimitRequest) returns (TransactionLimit);
+    rpc ListTransactionLimits(ListTransactionLimitsRequest) returns (ListTransactionLimitsResponse);
+    rpc DeleteTransactionLimit(DeleteTransactionLimitRequest) returns (Empty);
+    rpc CheckTransactionLimit(CheckTransactionLimitRequest) returns (CheckTransactionLimitResponse);
+
+    // --- Notifications ---
+    rpc GetNotificationPreferences(GetNotifPrefsRequest) returns (NotificationPreferences);
+    rpc UpdateNotificationPreferences(UpdateNotifPrefsRequest) returns (NotificationPreferences);
+    rpc ListNotifications(ListNotificationsRequest) returns (ListNotificationsResponse);
+    rpc MarkNotificationRead(MarkNotifReadRequest) returns (Empty);
+    rpc MarkAllNotificationsRead(MarkAllNotifReadRequest) returns (Empty);
+    rpc GetUnreadCount(GetUnreadCountRequest) returns (UnreadCountResponse);
+
+    // --- Tasks ---
+    rpc CreateScheduledTask(CreateScheduledTaskRequest) returns (ScheduledTask);
+    rpc UpdateScheduledTask(UpdateScheduledTaskRequest) returns (ScheduledTask);
+    rpc DeleteScheduledTask(DeleteScheduledTaskRequest) returns (Empty);
+    rpc ListScheduledTasks(ListScheduledTasksRequest) returns (ListScheduledTasksResponse);
+    rpc GetTaskExecutionLog(GetTaskExecutionLogRequest) returns (ListTaskExecutionLogResponse);
+    rpc RunTaskNow(RunTaskNowRequest) returns (TaskExecutionResult);
+
+    // --- Plugin API ---
+    rpc CustomDataGet(CustomDataGetRequest) returns (CustomDataResponse);
+    rpc CustomDataSet(CustomDataSetRequest) returns (CustomDataResponse);
+    rpc CustomDataDelete(CustomDataDeleteRequest) returns (Empty);
+    rpc CustomDataList(CustomDataListRequest) returns (CustomDataListResponse);
+    rpc EmitCustomEvent(CustomEventRequest) returns (Empty);
+    rpc RegisterCustomPermission(RegisterPermissionRequest) returns (Empty);
+
+    // --- Players ---
+    rpc GetProfile(GetProfileRequest) returns (PlayerProfile);
+    rpc SearchPlayers(SearchPlayersRequest) returns (SearchPlayersResponse);
+    rpc GetAlts(GetAltsRequest) returns (GetAltsResponse);
+    rpc GetSessionHistory(GetSessionHistoryRequest) returns (GetSessionHistoryResponse);
+    rpc GetIpHistory(GetIpHistoryRequest) returns (GetIpHistoryResponse);
+
+    // --- LuckPerms ---
+    rpc UpdateLuckPermsData(LuckPermsDataRequest) returns (Empty);
+}
+
+// ============================================================
+// Request/Response Messages
+// ============================================================
+
+// --- Registration ---
+message RegisterRequest {
+    string network_id = 1;
+    string server_name = 2;
+    string server_type = 3;
+}
+
+message RegisterResponse {
+    bool success = 1;
+    string message = 2;
+    string default_currency_code = 3;
+}
+
+message HeartbeatRequest {
+    string server_name = 1;
+    string network_id = 2;
+    float tps = 3;
+    float mspt = 4;
+    float cpu_percent = 5;
+    int32 memory_used_mb = 6;
+    int32 memory_max_mb = 7;
+    int32 player_count = 8;
+    int64 uptime_seconds = 9;
+}
+
+message HeartbeatResponse {
+    bool acknowledged = 1;
+    int64 server_time = 2;
+}
+
+// --- Punishments ---
+message CheckBanRequest {
+    string uuid = 1;
+    string ip_address = 2;
+}
+
+message CheckBanResponse {
+    bool banned = 1;
+    Punishment punishment = 2;
+}
+
+message CheckMuteRequest {
+    string uuid = 1;
+    string ip_address = 2;
+}
+
+message CheckMuteResponse {
+    bool muted = 1;
+    Punishment punishment = 2;
+}
+
+message GetPunishmentRequest {
+    int32 id = 1;
+}
+
+message ListPunishmentsRequest {
+    string type = 1;          // optional filter: BAN, MUTE, KICK, WARN
+    string active = 2;        // optional filter: "true", "false", or "" for all
+    string network_id = 3;    // optional filter by network
+    int32 page_size = 4;
+    string page_token = 5;
+}
+
+message ListPunishmentsResponse {
+    repeated Punishment punishments = 1;
+    string next_page_token = 2;
+    int32 total_count = 3;
+}
+
+message CreatePunishmentRequest {
+    string type = 1;
+    string target_uuid = 2;
+    string target_name = 3;
+    string target_ip = 4;
+    string reason = 5;
+    string staff_uuid = 6;
+    string staff_name = 7;
+    int32 template_id = 8;
+    int64 duration = 9;
+    string network_id = 10;
+    string server_name = 11;
+}
+
+message UpdatePunishmentRequest {
+    int32 id = 1;
+    string reason = 2;
+    int64 duration = 3;
+}
+
+message PunishmentResponse {
+    Punishment punishment = 1;
+}
+
+message RevokePunishmentRequest {
+    int32 punishment_id = 1;
+    string removed_by_uuid = 2;
+    string removed_by_name = 3;
+    string reason = 4;
+}
+
+message PlayerHistoryRequest {
+    string uuid = 1;
+    int32 page_size = 2;
+    string page_token = 3;
+}
+
+message PlayerHistoryResponse {
+    repeated Punishment punishments = 1;
+    string next_page_token = 2;
+    int32 total_count = 3;
+}
+
+message CreateTemplateRequest {
+    string name = 1;
+    string type = 2;
+    string reason = 3;
+    int64 duration = 4;
+}
+
+message ListTemplatesRequest {
+    int32 page_size = 1;
+    string page_token = 2;
+}
+
+message ListTemplatesResponse {
+    repeated PunishmentTemplate templates = 1;
+    string next_page_token = 2;
+}
+
+message DeleteTemplateRequest {
+    int32 id = 1;
+}
+
+message CreateAppealRequest {
+    int32 punishment_id = 1;
+    string appellant_uuid = 2;
+    string appellant_name = 3;
+    string appeal_text = 4;
+}
+
+message ReviewAppealRequest {
+    int32 appeal_id = 1;
+    string status = 2;
+    string reviewed_by_uuid = 3;
+    string reviewed_by_name = 4;
+    string review_notes = 5;
+}
+
+message ListAppealsRequest {
+    string status = 1;
+    int32 page_size = 2;
+    string page_token = 3;
+}
+
+message ListAppealsResponse {
+    repeated BanAppeal appeals = 1;
+    string next_page_token = 2;
+    int32 total_count = 3;
+}
+
+message EscalateAppealRequest {
+    int32 appeal_id = 1;
+    string escalated_by_uuid = 2;
+    string escalated_by_name = 3;
+    string escalation_tier = 4;
+    string notes = 5;
+}
+
+message AssignAppealRequest {
+    int32 appeal_id = 1;
+    string assigned_to_uuid = 2;
+    string assigned_to_name = 3;
+    string assigned_by_uuid = 4;
+    string assigned_by_name = 5;
+}
+
+message AddAppealCommentRequest {
+    int32 appeal_id = 1;
+    string sender_uuid = 2;
+    string sender_name = 3;
+    string sender_type = 4;
+    string message_text = 5;
+}
+
+message ListAppealCommentsRequest {
+    int32 appeal_id = 1;
+}
+
+message ListAppealCommentsResponse {
+    repeated AppealComment comments = 1;
+}
+
+message GetAppealConfigRequest {
+    string network_id = 1;
+}
+
+// --- Sessions ---
+message PlayerJoinRequest {
+    string uuid = 1;
+    string username = 2;
+    string ip_address = 3;
+    string client_version = 4;
+    string network_id = 5;
+    string server_name = 6;
+    string proxy_id = 7;
+}
+
+message PlayerJoinResponse {
+    PlayerProfile profile = 1;
+    bool first_join = 2;
+    repeated AltLink alts = 3;
+    JoinLeaveConfig join_leave_config = 4;
+    repeated FirstJoinAction first_join_actions = 5;
+    TabListConfig tab_list_config = 6;
+}
+
+message PlayerLeaveRequest {
+    string uuid = 1;
+    string network_id = 2;
+    string server_name = 3;
+}
+
+message ServerSwitchRequest {
+    string uuid = 1;
+    string from_server = 2;
+    string to_server = 3;
+    string network_id = 4;
+}
+
+// --- Chat ---
+message ChatMessageRequest {
+    string sender_uuid = 1;
+    string sender_name = 2;
+    string message = 3;
+    string channel_name = 4;
+    string network_id = 5;
+    string server_name = 6;
+    bool bypass_automod = 7;
+    string sender_nickname = 8;
+    string sender_chat_color = 9;
+}
+
+message ChatMessageResponse {
+    bool allowed = 1;
+    string formatted_message = 2;
+    string blocked_reason = 3;
+    ChatChannel channel = 4;
+    int64 message_id = 5;
+}
+
+message PrivateMessageRequest {
+    string sender_uuid = 1;
+    string sender_name = 2;
+    string recipient_uuid = 3;
+    string recipient_name = 4;
+    string message = 5;
+    string network_id = 6;
+    string server_name = 7;
+}
+
+message PrivateMessageResponse {
+    bool success = 1;
+    string message = 2;
+}
+
+message GetChannelsRequest {
+    string network_id = 1;
+}
+
+message GetChannelsResponse {
+    repeated ChatChannel channels = 1;
+}
+
+message CreateChannelRequest {
+    ChatChannel channel = 1;
+}
+
+message UpdateChannelRequest {
+    ChatChannel channel = 1;
+}
+
+message DeleteChannelRequest {
+    int32 id = 1;
+}
+
+message GetChatLogRequest {
+    string network_id = 1;
+    int32 channel_id = 2;
+    string sender_uuid = 3;
+    google.protobuf.Timestamp from = 4;
+    google.protobuf.Timestamp to = 5;
+    int32 page_size = 6;
+    string page_token = 7;
+    bool include_deleted = 8;
+}
+
+message GetChatLogResponse {
+    repeated ChatLogEntry entries = 1;
+    string next_page_token = 2;
+    int32 total_count = 3;
+}
+
+message GetPrivateMessagesRequest {
+    string uuid1 = 1;
+    string uuid2 = 2;
+    int32 page_size = 3;
+    string page_token = 4;
+}
+
+message GetPrivateMessagesResponse {
+    repeated PrivateMessage messages = 1;
+    string next_page_token = 2;
+}
+
+message GetPlayerChatSettingsRequest {
+    string uuid = 1;
+}
+
+message UpdatePlayerChatSettingsRequest {
+    PlayerChatSettings settings = 1;
+}
+
+message EvaluateAutomodRequest {
+    string sender_uuid = 1;
+    string message = 2;
+    string network_id = 3;
+    string channel_name = 4;
+}
+
+message EvaluateAutomodResponse {
+    bool blocked = 1;
+    string reason = 2;
+    string matched_rule = 3;
+}
+
+// --- Chat Webhooks ---
+message ListChatWebhooksRequest { string network_id = 1; }
+message ListChatWebhooksResponse { repeated ChatWebhook webhooks = 1; }
+message CreateChatWebhookRequest { ChatWebhook webhook = 1; }
+message UpdateChatWebhookRequest { ChatWebhook webhook = 1; }
+message DeleteChatWebhookRequest { int64 id = 1; }
+
+// --- Chat Moderation ---
+message DeleteChatMessageRequest {
+    int64 id = 1;
+    string deleter_uuid = 2;
+    string reason = 3;
+}
+
+message GetChatAnalyticsRequest {
+    string network_id = 1;
+    google.protobuf.Timestamp from = 2;
+    google.protobuf.Timestamp to = 3;
+}
+message GetChatAnalyticsResponse {
+    repeated TimeSeriesPoint messages_per_day = 1;
+    repeated TimeSeriesPoint automod_blocks_per_day = 2;
+    repeated TimeSeriesPoint unique_chatters_per_day = 3;
+    repeated DistributionEntry messages_by_channel = 4;
+    repeated DistributionEntry top_senders = 5;
+    int64 total_messages = 6;
+    int64 total_blocked = 7;
+}
+
+// --- Ignore List ---
+message AddIgnoreRequest {
+    string player_uuid = 1;
+    string ignored_uuid = 2;
+    string network_id = 3;
+}
+message RemoveIgnoreRequest {
+    string player_uuid = 1;
+    string ignored_uuid = 2;
+    string network_id = 3;
+}
+message ListIgnoresRequest {
+    string player_uuid = 1;
+    string network_id = 2;
+}
+message ListIgnoresResponse {
+    repeated PlayerIgnore ignores = 1;
+}
+message LoadIgnoreListRequest {
+    string player_uuid = 1;
+    string network_id = 2;
+}
+message LoadIgnoreListResponse {
+    int32 count = 1;
+}
+
+// --- Player Mail ---
+message SendMailRequest {
+    string sender_uuid = 1;
+    string sender_name = 2;
+    string recipient_uuid = 3;
+    string recipient_name = 4;
+    string message = 5;
+    string network_id = 6;
+}
+message GetMailRequest {
+    string recipient_uuid = 1;
+    bool unread_only = 2;
+    int32 page_size = 3;
+    int32 offset = 4;
+}
+message GetMailResponse {
+    repeated PlayerMail messages = 1;
+    int32 total = 2;
+}
+message MarkMailReadRequest { int64 id = 1; }
+message DeleteMailRequest { int64 id = 1; }
+message ClearReadMailRequest { string recipient_uuid = 1; }
+message GetUnreadMailCountRequest { string recipient_uuid = 1; }
+message GetUnreadMailCountResponse { int32 count = 1; }
+
+// --- Tickets ---
+message CreateTicketRequest {
+    string creator_uuid = 1;
+    string creator_name = 2;
+    string network_id = 3;
+    string server_name = 4;
+    string subject = 5;
+    string initial_message = 6;
+    int32 category_id = 7;
+}
+
+message GetTicketRequest {
+    int32 id = 1;
+}
+
+message ListTicketsRequest {
+    string creator_uuid = 1;
+    string status = 2;
+    string assigned_staff_uuid = 3;
+    string network_id = 4;
+    int32 page_size = 5;
+    string page_token = 6;
+    int32 category_id = 7;
+}
+
+message ListTicketsResponse {
+    repeated Ticket tickets = 1;
+    string next_page_token = 2;
+    int32 total_count = 3;
+}
+
+message AddTicketMessageRequest {
+    int32 ticket_id = 1;
+    string sender_uuid = 2;
+    string sender_name = 3;
+    string sender_type = 4;
+    string message = 5;
+}
+
+message AssignTicketRequest {
+    int32 ticket_id = 1;
+    string staff_uuid = 2;
+}
+
+message SetTicketPriorityRequest {
+    int32 ticket_id = 1;
+    string priority = 2;
+}
+
+message CloseTicketRequest {
+    int32 ticket_id = 1;
+    string closed_by_uuid = 2;
+}
+
+message ReopenTicketRequest {
+    int32 ticket_id = 1;
+}
+
+message SetTicketCategoryRequest {
+    int32 ticket_id = 1;
+    int32 category_id = 2;
+}
+
+// --- Ticket Messages ---
+message ListTicketMessagesRequest {
+    int32 ticket_id = 1;
+}
+
+message ListTicketMessagesResponse {
+    repeated TicketMessage messages = 1;
+}
+
+// --- Ticket Categories ---
+message ListTicketCategoriesRequest {
+    string network_id = 1;
+    bool include_disabled = 2;
+}
+
+message ListTicketCategoriesResponse {
+    repeated TicketCategory categories = 1;
+}
+
+message CreateTicketCategoryRequest {
+    string network_id = 1;
+    string name = 2;
+    string description = 3;
+    string icon = 4;
+    int32 sort_order = 5;
+}
+
+message UpdateTicketCategoryRequest {
+    int32 id = 1;
+    string name = 2;
+    string description = 3;
+    string icon = 4;
+    int32 sort_order = 5;
+    bool enabled = 6;
+}
+
+message DeleteTicketCategoryRequest {
+    int32 id = 1;
+}
+
+message SeedDefaultCategoriesRequest {
+    string network_id = 1;
+}
+
+// --- Ticket Notes ---
+message AddTicketNoteRequest {
+    int32 ticket_id = 1;
+    string author_uuid = 2;
+    string author_name = 3;
+    string note_text = 4;
+}
+
+message ListTicketNotesRequest {
+    int32 ticket_id = 1;
+}
+
+message ListTicketNotesResponse {
+    repeated TicketNote notes = 1;
+}
+
+// --- Ticket Tags ---
+message ListTicketTagsRequest {
+    string network_id = 1;
+}
+
+message ListTicketTagsResponse {
+    repeated TicketTag tags = 1;
+}
+
+message CreateTicketTagRequest {
+    string network_id = 1;
+    string name = 2;
+    string color = 3;
+}
+
+message DeleteTicketTagRequest {
+    int32 id = 1;
+}
+
+message AddTicketTagAssignmentRequest {
+    int32 ticket_id = 1;
+    int32 tag_id = 2;
+}
+
+message RemoveTicketTagAssignmentRequest {
+    int32 ticket_id = 1;
+    int32 tag_id = 2;
+}
+
+// --- Reports & Notes ---
+message CreateReportRequest {
+    string reporter_uuid = 1;
+    string reporter_name = 2;
+    string target_uuid = 3;
+    string target_name = 4;
+    string reason = 5;
+    string network_id = 6;
+    string server_name = 7;
+}
+
+message ListReportsRequest {
+    string status = 1;
+    string network_id = 2;
+    int32 page_size = 3;
+    string page_token = 4;
+}
+
+message ListReportsResponse {
+    repeated Report reports = 1;
+    string next_page_token = 2;
+    int32 total_count = 3;
+}
+
+message ClaimReportRequest {
+    int32 report_id = 1;
+    string staff_uuid = 2;
+}
+
+message ResolveReportRequest {
+    int32 report_id = 1;
+    string resolved_by_uuid = 2;
+}
+
+message CreateNoteRequest {
+    string target_uuid = 1;
+    string target_name = 2;
+    string note_text = 3;
+    string staff_uuid = 4;
+    string staff_name = 5;
+}
+
+message GetNotesRequest {
+    string target_uuid = 1;
+    int32 page_size = 2;
+    string page_token = 3;
+}
+
+message GetNotesResponse {
+    repeated PlayerNote notes = 1;
+    string next_page_token = 2;
+}
+
+message DeleteNoteRequest {
+    int32 id = 1;
+}
+
+// --- Staff ---
+message CreateStaffAccountRequest {
+    string username = 1;
+    string password = 2;
+    string email = 3;
+    string minecraft_uuid = 4;
+    int32 permission_group_id = 5;
+}
+
+message UpdateStaffAccountRequest {
+    int32 id = 1;
+    string email = 2;
+    string minecraft_uuid = 3;
+    int32 permission_group_id = 4;
+    bool enabled = 5;
+}
+
+message DeleteStaffAccountRequest {
+    int32 id = 1;
+}
+
+message ListStaffRequest {
+    int32 page_size = 1;
+    string page_token = 2;
+}
+
+message ListStaffResponse {
+    repeated StaffAccount staff = 1;
+    string next_page_token = 2;
+}
+
+message GetStaffByUuidRequest {
+    string minecraft_uuid = 1;
+}
+
+message CreatePermissionGroupRequest {
+    string name = 1;
+    string permissions_json = 2;
+    string description = 3;
+    int32 parent_group_id = 4;
+    int32 priority = 5;
+}
+
+message UpdatePermissionGroupRequest {
+    int32 id = 1;
+    string name = 2;
+    string permissions_json = 3;
+    string description = 4;
+    int32 parent_group_id = 5;
+    int32 priority = 6;
+}
+
+message DeletePermissionGroupRequest {
+    int32 id = 1;
+}
+
+message ListPermissionGroupsRequest {
+    int32 page_size = 1;
+    string page_token = 2;
+}
+
+message ListPermissionGroupsResponse {
+    repeated PermissionGroup groups = 1;
+    string next_page_token = 2;
+}
+
+message SetVanishRequest {
+    string staff_uuid = 1;
+    bool vanish = 2;
+}
+
+message SetGodModeRequest {
+    string staff_uuid = 1;
+    bool god_mode = 2;
+}
+
+message GetStaffStateRequest {
+    string staff_uuid = 1;
+}
+
+message IsVanishedRequest {
+    string uuid = 1;
+}
+
+message IsVanishedResponse {
+    bool vanished = 1;
+}
+
+message ListStaffTeamDisplayRequest {}
+
+message ListStaffTeamDisplayResponse {
+    repeated StaffTeamDisplayEntry entries = 1;
+}
+
+message UpdateStaffTeamDisplayRequest {
+    StaffTeamDisplayEntry entry = 1;
+}
+
+// --- Contributors ---
+message ListContributorRolesRequest {
+    bool visible_only = 1;
+}
+message ListContributorRolesResponse {
+    repeated ContributorRole roles = 1;
+}
+message CreateContributorRoleRequest {
+    ContributorRole role = 1;
+}
+message UpdateContributorRoleRequest {
+    ContributorRole role = 1;
+}
+message DeleteContributorRoleRequest {
+    int32 id = 1;
+}
+message ListContributorMembersRequest {
+    int32 role_id = 1;
+}
+message ListContributorMembersResponse {
+    repeated ContributorRoleMember members = 1;
+}
+message AddContributorMemberRequest {
+    int32 role_id = 1;
+    // Either player_uuid or username may be supplied; the server resolves
+    // whichever is missing against player_profiles when possible.
+    string player_uuid = 2;
+    string username = 3;
+    string display_name = 4;
+    int32 staff_account_id = 5;
+    string notes = 6;
+    int32 sort_order = 7;
+}
+message UpdateContributorMemberRequest {
+    ContributorRoleMember member = 1;
+}
+message RemoveContributorMemberRequest {
+    int32 id = 1;
+}
+message ListPublicContributorsRequest {}
+message ListPublicContributorsResponse {
+    repeated ContributorRoleWithMembers roles = 1;
+}
+
+// --- Networks ---
+message GetNetworkRequest {
+    string id = 1;
+}
+
+message ListNetworksRequest {
+    int32 page_size = 1;
+    string page_token = 2;
+}
+
+message ListNetworksResponse {
+    repeated Network networks = 1;
+    string next_page_token = 2;
+}
+
+message CreateNetworkRequest {
+    Network network = 1;
+}
+
+message UpdateNetworkRequest {
+    Network network = 1;
+}
+
+message DeleteNetworkRequest {
+    string id = 1;
+}
+
+message GetMotdRequest {
+    string network_id = 1;
+}
+
+message GetMotdResponse {
+    string line1 = 1;
+    string line2 = 2;
+    string server_icon_base64 = 3;
+    string hover_message = 4;
+}
+
+message UpdateMotdRequest {
+    string network_id = 1;
+    string line1 = 2;
+    string line2 = 3;
+    string server_icon_base64 = 4;
+    string hover_message = 5;
+    string icon_url = 6;
+}
+
+message GetServerStatusRequest {
+    string network_id = 1;
+}
+
+message ServerStatusResponse {
+    int32 total_players = 1;
+    repeated ServerInfo servers = 2;
+}
+
+message ServerInfo {
+    string server_name = 1;
+    string server_type = 2;
+    int32 player_count = 3;
+    bool online = 4;
+    float tps = 5;
+}
+
+message GetOnlinePlayersRequest {
+    string network_id = 1;
+}
+
+message GetOnlinePlayersResponse {
+    repeated string uuids = 1;
+    int32 count = 2;
+}
+
+// --- Analytics ---
+message GetPlayerCountsRequest {
+    string network_id = 1;
+    google.protobuf.Timestamp from = 2;
+    google.protobuf.Timestamp to = 3;
+}
+
+message GetPlayerCountsResponse {
+    repeated TimeSeriesPoint points = 1;
+}
+
+message TimeSeriesPoint {
+    google.protobuf.Timestamp timestamp = 1;
+    int32 value = 2;
+}
+
+message GetUniquePlayersRequest {
+    string network_id = 1;
+    google.protobuf.Timestamp from = 2;
+    google.protobuf.Timestamp to = 3;
+}
+
+message GetUniquePlayersResponse {
+    int32 count = 1;
+}
+
+message GetVersionDistributionRequest {
+    string network_id = 1;
+}
+
+message GetCountryDistributionRequest {
+    string network_id = 1;
+}
+
+message DistributionResponse {
+    repeated DistributionEntry entries = 1;
+}
+
+message DistributionEntry {
+    string label = 1;
+    int32 count = 2;
+    double percentage = 3;
+}
+
+message GetPeakHoursRequest {
+    string network_id = 1;
+    int32 days = 2;
+}
+
+message GetPeakHoursResponse {
+    repeated HourlyCount hours = 1;
+}
+
+message HourlyCount {
+    int32 hour = 1;
+    double average_players = 2;
+}
+
+message GetServerBreakdownRequest {
+    string network_id = 1;
+}
+
+message GetServerBreakdownResponse {
+    repeated ServerBreakdown servers = 1;
+}
+
+message ServerBreakdown {
+    string server_name = 1;
+    int32 player_count = 2;
+    double percentage = 3;
+}
+
+message GetLeaderboardRequest {
+    string network_id = 1;
+    string metric = 2;
+    int32 limit = 3;
+}
+
+message GetLeaderboardResponse {
+    repeated LeaderboardEntry entries = 1;
+}
+
+message LeaderboardEntry {
+    string uuid = 1;
+    string username = 2;
+    double value = 3;
+    int32 rank = 4;
+}
+
+// --- Audit ---
+message LogActionRequest {
+    string action_type = 1;
+    string actor_uuid = 2;
+    string actor_name = 3;
+    string target_uuid = 4;
+    string target_name = 5;
+    string details = 6;
+    string ip_address = 7;
+    string network_id = 8;
+    string server_name = 9;
+}
+
+message QueryAuditLogRequest {
+    string actor_uuid = 1;
+    string target_uuid = 2;
+    string action_type = 3;
+    google.protobuf.Timestamp from = 4;
+    google.protobuf.Timestamp to = 5;
+    int32 page_size = 6;
+    string page_token = 7;
+}
+
+message QueryAuditLogResponse {
+    repeated AuditLogEntry entries = 1;
+    string next_page_token = 2;
+    int32 total_count = 3;
+}
+
+message GetStaffActivityRequest {
+    string staff_uuid = 1;
+    google.protobuf.Timestamp from = 2;
+    google.protobuf.Timestamp to = 3;
+}
+
+message GetStaffActivityResponse {
+    repeated AuditLogEntry entries = 1;
+    int32 total_actions = 2;
+}
+
+// --- Config (automod, join/leave, tab, webhooks, retention, pages, leaderboards) ---
+message ListAutomodRulesRequest { string network_id = 1; }
+message ListAutomodRulesResponse { repeated AutomodRule rules = 1; }
+message CreateAutomodRuleRequest { AutomodRule rule = 1; }
+message UpdateAutomodRuleRequest { AutomodRule rule = 1; }
+message DeleteAutomodRuleRequest { int32 id = 1; }
+message ListAutomodTriggersRequest { int32 rule_id = 1; }
+message ListAutomodTriggersResponse { repeated AutomodTrigger triggers = 1; }
+message CreateAutomodTriggerRequest { AutomodTrigger trigger = 1; }
+message DeleteAutomodTriggerRequest { int32 id = 1; }
+message GetJoinLeaveConfigRequest { string network_id = 1; }
+message UpdateJoinLeaveConfigRequest { JoinLeaveConfig config = 1; }
+message ListFirstJoinActionsRequest { string network_id = 1; }
+message ListFirstJoinActionsResponse { repeated FirstJoinAction actions = 1; }
+message SetFirstJoinActionsRequest { string network_id = 1; repeated FirstJoinAction actions = 2; }
+message GetTabListConfigRequest { string network_id = 1; string server_name = 2; }
+message UpdateTabListConfigRequest { TabListConfig config = 1; }
+message DeleteTabListConfigRequest { int32 id = 1; }
+message ListTabListConfigsRequest { string network_id = 1; }
+message ListTabListConfigsResponse { repeated TabListConfig configs = 1; }
+message CreateWebhookRequest { string url = 1; string secret = 2; string event_types_json = 3; string network_id = 4; }
+message UpdateWebhookRequest { int32 id = 1; string url = 2; string event_types_json = 3; bool active = 4; }
+message DeleteWebhookRequest { int32 id = 1; }
+message ListWebhooksRequest { string network_id = 1; }
+message ListWebhooksResponse { repeated WebhookEndpoint webhooks = 1; }
+message TestWebhookRequest { int32 id = 1; }
+message TestWebhookResponse { bool success = 1; int32 http_status = 2; string response_body = 3; }
+message ListWebhookDeliveriesRequest { int32 endpoint_id = 1; int32 page_size = 2; string page_token = 3; }
+message ListWebhookDeliveriesResponse { repeated WebhookDelivery deliveries = 1; string next_page_token = 2; }
+message GetRetentionPoliciesRequest {}
+message ListRetentionPoliciesResponse { repeated DataRetentionPolicy policies = 1; }
+message UpdateRetentionPolicyRequest { DataRetentionPolicy policy = 1; }
+message RunRetentionNowRequest {}
+message CreatePageRequest { string slug = 1; string title = 2; string content = 3; bool published = 4; }
+message UpdatePageRequest { int32 id = 1; string title = 2; string content = 3; bool published = 4; }
+message DeletePageRequest { int32 id = 1; }
+message ListPagesRequest { bool published_only = 1; int32 page_size = 2; string page_token = 3; }
+message ListPagesResponse { repeated StaticPage pages = 1; string next_page_token = 2; }
+message GetPageBySlugRequest { string slug = 1; }
+message ListLeaderboardConfigsRequest { string network_id = 1; }
+message ListLeaderboardConfigsResponse { repeated LeaderboardConfig configs = 1; }
+message UpdateLeaderboardConfigRequest { LeaderboardConfig config = 1; }
+
+// --- Auth ---
+message AuthenticateStaffRequest { string username = 1; string password = 2; }
+message AuthenticateStaffResponse {
+    string token = 1;
+    StaffAccount staff = 2;
+    bool requires_2fa = 3;
+    string challenge_token = 4;
+}
+message ValidateAuthCodeRequest { string code = 1; }
+message ValidateAuthCodeResponse { bool valid = 1; string player_uuid = 2; string session_token = 3; }
+message ValidateMicrosoftAuthRequest { string access_token = 1; }
+message ValidateMicrosoftAuthResponse { bool valid = 1; string player_uuid = 2; string session_token = 3; }
+message ValidateApiKeyRequest { string key = 1; }
+message ValidateApiKeyResponse { bool valid = 1; ApiKey api_key = 2; }
+message GenerateAuthCodeRequest { string player_uuid = 1; }
+message GenerateAuthCodeResponse { string code = 1; google.protobuf.Timestamp expires_at = 2; }
+
+// --- GDPR ---
+message GdprRequest { string player_uuid = 1; string request_type = 2; string requested_by = 3; }
+message GdprResponse { DataDeletionRequest request = 1; }
+message ProcessGdprRequestRequest { int32 request_id = 1; }
+message ListGdprRequestsRequest { string status = 1; int32 page_size = 2; string page_token = 3; }
+message ListGdprRequestsResponse { repeated DataDeletionRequest requests = 1; string next_page_token = 2; }
+
+// --- Health ---
+message HealthMetricsRequest { string server_name = 1; string network_id = 2; string server_type = 3; float tps = 4; float mspt = 5; float cpu_percent = 6; int32 memory_used_mb = 7; int32 memory_max_mb = 8; int32 player_count = 9; int64 uptime_seconds = 10; string pelican_server_id = 11; }
+message GetServerHealthRequest { string server_name = 1; }
+message ListServersRequest { string network_id = 1; }
+message ListServersResponse { repeated ServerHeartbeat servers = 1; }
+
+// --- Managed servers ---
+message ListManagedServersRequest { string network_id = 1; }
+message ListManagedServersResponse { repeated ManagedServer servers = 1; }
+message GetManagedServerRequest { int64 id = 1; }
+message CreateManagedServerRequest {
+    string network_id = 1;
+    string name = 2;
+    string server_type = 3;
+    string host = 4;
+    int32 port = 5;
+    string description = 6;
+    string default_currency_code = 7;
+}
+message CreateManagedServerResponse {
+    ManagedServer server = 1;
+    string api_key = 2; // plaintext — returned once on create; hashed server-side
+}
+message UpdateManagedServerRequest {
+    int64 id = 1;
+    string network_id = 2;
+    string name = 3;
+    string server_type = 4;
+    string host = 5;
+    int32 port = 6;
+    string description = 7;
+    string default_currency_code = 8;
+}
+message DeleteManagedServerRequest { int64 id = 1; }
+message RotateManagedServerApiKeyRequest { int64 id = 1; }
+message RotateManagedServerApiKeyResponse { string api_key = 1; }
+
+// --- Server groups ---
+message ListServerGroupsRequest { string network_id = 1; }
+message ListServerGroupsResponse { repeated ServerGroup groups = 1; }
+message GetServerGroupRequest { int64 id = 1; }
+message CreateServerGroupRequest {
+    string network_id = 1;
+    string name = 2;
+    string description = 3;
+    bool is_default = 4;
+    string load_balance_strategy = 5;
+    int32 max_players = 6;
+}
+message UpdateServerGroupRequest {
+    int64 id = 1;
+    string name = 2;
+    string description = 3;
+    string load_balance_strategy = 4;
+    int32 max_players = 5;
+}
+message DeleteServerGroupRequest { int64 id = 1; }
+message SetDefaultServerGroupRequest { int64 id = 1; }
+message AddServerToGroupRequest {
+    int64 group_id = 1;
+    int64 managed_server_id = 2;
+    int32 weight = 3;
+}
+message RemoveServerFromGroupRequest { int64 group_id = 1; int64 managed_server_id = 2; }
+message SetMemberWeightRequest {
+    int64 group_id = 1;
+    int64 managed_server_id = 2;
+    int32 weight = 3;
+}
+message ListGroupMembersRequest { int64 group_id = 1; }
+message ListGroupMembersResponse { repeated ServerGroupMember members = 1; }
+
+message ListMaintenanceWindowsRequest { string network_id = 1; }
+message ListMaintenanceWindowsResponse { repeated MaintenanceWindow windows = 1; }
+
+message CreateMaintenanceWindowRequest {
+    string network_id = 1;
+    string scope = 2;          // NETWORK | GROUP | SERVER
+    int64 target_id = 3;       // group_id or managed_server_id; 0 for NETWORK
+    google.protobuf.Timestamp start_time = 4;
+    google.protobuf.Timestamp end_time = 5;
+    string reason = 6;
+    string countdown_message = 7;
+    string kick_message = 8;
+}
+
+message UpdateMaintenanceWindowRequest {
+    int64 id = 1;
+    string scope = 2;
+    int64 target_id = 3;
+    google.protobuf.Timestamp start_time = 4;
+    google.protobuf.Timestamp end_time = 5;
+    string reason = 6;
+    string countdown_message = 7;
+    string kick_message = 8;
+}
+
+message DeleteMaintenanceWindowRequest { int64 id = 1; }
+
+message SetNetworkMaintenanceRequest { string network_id = 1; bool on = 2; string reason = 3; }
+message SetGroupMaintenanceRequest { int64 group_id = 1; bool on = 2; string reason = 3; }
+message SetServerMaintenanceRequest { int64 server_id = 1; bool on = 2; string reason = 3; }
+
+message CheckMaintenanceRequest {
+    string network_id = 1;
+    string server_name = 2;       // optional: target server the player is joining
+    repeated string permissions = 3;
+}
+message CheckMaintenanceResponse {
+    bool under_maintenance = 1;
+    string reason = 2;
+    string scope = 3;             // NETWORK | GROUP | SERVER | ""
+    bool can_bypass = 4;
+}
+// --- Announcements ---
+message ListAnnouncementsRequest {
+    string network_id = 1;
+    int32 page_size = 2;
+    string page_token = 3;
+}
+message ListAnnouncementsResponse {
+    repeated Announcement announcements = 1;
+    string next_page_token = 2;
+    int32 total_count = 3;
+}
+message GetAnnouncementRequest { int64 id = 1; }
+message CreateAnnouncementRequest {
+    string network_id = 1;
+    string title = 2;
+    string message = 3;
+    string type = 4;
+    string schedule_type = 5;
+    google.protobuf.Timestamp scheduled_at = 6;
+    int32 repeat_interval_seconds = 7;
+    bool enabled = 8;
+    string created_by_uuid = 9;
+    repeated string target_servers = 10;
+    repeated int64 target_groups = 11;
+    google.protobuf.Timestamp expires_at = 12;
+    string required_permission = 13;
+    int32 min_player_count = 14;
+}
+message UpdateAnnouncementRequest { Announcement announcement = 1; }
+message DeleteAnnouncementRequest { int64 id = 1; }
+message SendAnnouncementRequest { int64 id = 1; }
+message ListAnnouncementLogsRequest {
+    int64 announcement_id = 1;
+    int32 page_size = 2;
+    string page_token = 3;
+}
+message ListAnnouncementLogsResponse {
+    repeated AnnouncementLog logs = 1;
+    string next_page_token = 2;
+    int32 total_count = 3;
+}
+
+message GetHealthHistoryRequest { string server_name = 1; google.protobuf.Timestamp from = 2; google.protobuf.Timestamp to = 3; int32 page_size = 4; string page_token = 5; }
+message GetHealthHistoryResponse { repeated ServerHealthLog entries = 1; string next_page_token = 2; }
+message CreateHealthAlertRuleRequest { HealthAlertRule rule = 1; }
+message UpdateHealthAlertRuleRequest { HealthAlertRule rule = 1; }
+message ListHealthAlertRulesRequest { string network_id = 1; }
+message ListHealthAlertRulesResponse { repeated HealthAlertRule rules = 1; }
+message ListHealthAlertsRequest { string server_name = 1; string network_id = 2; bool unacknowledged_only = 3; int32 page_size = 4; string page_token = 5; }
+message ListHealthAlertsResponse { repeated HealthAlert alerts = 1; string next_page_token = 2; }
+message AcknowledgeAlertRequest { int32 alert_id = 1; }
+message PelicanRestartRequest { string server_name = 1; }
+message PelicanRestartResponse { bool success = 1; string message = 2; }
+
+// --- Queue ---
+message EnterQueueRequest { string uuid = 1; string username = 2; string network_id = 3; repeated string permissions = 4; string server_name = 5; }
+message QueuePositionResponse { int32 position = 1; int32 total_in_queue = 2; string status = 3; int32 estimated_wait_seconds = 4; string target_server = 5; }
+message LeaveQueueRequest { string uuid = 1; string network_id = 2; string server_name = 3; }
+message GetQueuePositionRequest { string uuid = 1; string network_id = 2; string server_name = 3; }
+message GetQueueConfigRequest { string network_id = 1; string server_name = 2; }
+message UpdateQueueConfigRequest { QueueConfig config = 1; }
+message GetQueueStatusRequest { string network_id = 1; string server_name = 2; }
+message QueueStatusResponse { int32 total_waiting = 1; repeated QueueEntry entries = 2; QueueConfig config = 3; }
+
+// --- Routing ---
+message GetRoutingRulesRequest { string network_id = 1; }
+message ListRoutingRulesResponse { repeated RoutingRule rules = 1; }
+message CreateRoutingRuleRequest { RoutingRule rule = 1; }
+message UpdateRoutingRuleRequest { RoutingRule rule = 1; }
+message DeleteRoutingRuleRequest { int32 id = 1; }
+message ResolveRouteRequest {
+    string uuid = 1;
+    string network_id = 2;
+    bool is_first_join = 3;
+    repeated string permissions = 4;
+    string country = 5;
+    string client_version = 6;
+    int64 playtime_seconds = 7;
+}
+message ResolveRouteResponse { string target_server = 1; string matched_rule_type = 2; }
+
+// --- Economy ---
+message GetBalanceRequest { string uuid = 1; string currency_code = 2; }
+message BalanceResponse { string uuid = 1; string currency_code = 2; double balance = 3; }
+message GetAllBalancesRequest { string uuid = 1; }
+message AllBalancesResponse { repeated BalanceResponse balances = 1; }
+message ModifyBalanceRequest { string uuid = 1; string currency_code = 2; double amount = 3; string transaction_type = 4; string source_description = 5; string source_server = 6; string initiated_by_uuid = 7; }
+message PlayerPayRequest { string sender_uuid = 1; string recipient_uuid = 2; string currency_code = 3; double amount = 4; string source_server = 5; }
+message PayResponse { bool success = 1; string message = 2; double sender_balance = 3; double recipient_balance = 4; }
+message ExchangeCurrencyRequest { string uuid = 1; string from_currency_code = 2; string to_currency_code = 3; double amount = 4; }
+message ExchangeResponse { bool success = 1; string message = 2; double from_amount = 3; double to_amount = 4; double fee = 5; }
+message TransactionHistoryRequest { string uuid = 1; string currency_code = 2; int32 page_size = 3; string page_token = 4; }
+message TransactionHistoryResponse { repeated EconomyTransaction transactions = 1; string next_page_token = 2; }
+message CreateCurrencyRequest { Currency currency = 1; }
+message UpdateCurrencyRequest { Currency currency = 1; }
+message DeleteCurrencyRequest { int32 id = 1; }
+message ListCurrenciesRequest { string network_id = 1; }
+message ListCurrenciesResponse { repeated Currency currencies = 1; }
+message GetExchangeRatesRequest { string currency_code = 1; }
+message ListExchangeRatesResponse { repeated CurrencyExchangeRate rates = 1; }
+message SetExchangeRateRequest { CurrencyExchangeRate rate = 1; }
+message DeleteExchangeRateRequest { int32 from_currency_id = 1; int32 to_currency_id = 2; }
+message EconomyLeaderboardRequest { string currency_code = 1; int32 limit = 2; }
+message EconomyLeaderboardResponse { repeated LeaderboardEntry entries = 1; }
+
+// Currency access
+message CheckCurrencyAccessRequest { string uuid = 1; string currency_code = 2; string action = 3; }
+message CheckCurrencyAccessResponse { bool allowed = 1; string reason = 2; }
+
+// Money notes
+message CreateMoneyNoteRequest { string uuid = 1; string currency_code = 2; double amount = 3; string source_server = 4; }
+message MoneyNoteResponse { bool success = 1; string message = 2; string note_id = 3; double new_balance = 4; }
+message RedeemMoneyNoteRequest { string uuid = 1; string note_id = 2; string source_server = 3; }
+message RedeemMoneyNoteResponse { bool success = 1; string message = 2; double amount = 3; string currency_code = 4; double new_balance = 5; }
+
+// Banks
+message CreateBankAccountRequest { BankAccount account = 1; }
+message GetBankAccountRequest { int64 id = 1; }
+message ListBankAccountsRequest { string uuid = 1; string network_id = 2; }
+message ListBankAccountsResponse { repeated BankAccount accounts = 1; }
+message DeleteBankAccountRequest { int64 id = 1; string uuid = 2; }
+message BankDepositRequest { int64 bank_account_id = 1; string uuid = 2; double amount = 3; string source_server = 4; }
+message BankWithdrawRequest { int64 bank_account_id = 1; string uuid = 2; double amount = 3; string source_server = 4; }
+message BankOperationResponse { bool success = 1; string message = 2; double bank_balance = 3; double player_balance = 4; }
+message AddBankMemberRequest { int64 bank_account_id = 1; string requester_uuid = 2; BankAccountMember member = 3; }
+message RemoveBankMemberRequest { int64 bank_account_id = 1; string requester_uuid = 2; string member_uuid = 3; }
+message ListBankMembersRequest { int64 bank_account_id = 1; }
+message ListBankMembersResponse { repeated BankAccountMember members = 1; }
+message UpdateBankMemberRequest { int64 bank_account_id = 1; string requester_uuid = 2; BankAccountMember member = 3; }
+message BankTransactionHistoryRequest { int64 bank_account_id = 1; int32 page_size = 2; string page_token = 3; }
+message BankTransactionHistoryResponse { repeated BankTransaction transactions = 1; string next_page_token = 2; }
+
+// Shops
+message CreateShopRequest { Shop shop = 1; }
+message UpdateShopRequest { Shop shop = 1; }
+message DeleteShopRequest { int64 id = 1; }
+message ListShopsRequest { string network_id = 1; string owner_uuid = 2; string shop_type = 3; }
+message ListShopsResponse { repeated Shop shops = 1; }
+message AddShopItemRequest { ShopItem item = 1; }
+message UpdateShopItemRequest { ShopItem item = 1; }
+message RemoveShopItemRequest { int64 id = 1; }
+message ListShopItemsRequest { int64 shop_id = 1; }
+message ListShopItemsResponse { repeated ShopItem items = 1; }
+message ShopTransactRequest { int64 shop_id = 1; int64 shop_item_id = 2; string uuid = 3; int32 quantity = 4; string action = 5; string source_server = 6; }
+message ShopTransactResponse { bool success = 1; string message = 2; double total_cost = 3; double tax_amount = 4; double new_balance = 5; }
+
+// Auctions
+message CreateAuctionListingRequest { AuctionListing listing = 1; }
+message PlaceAuctionBidRequest { int64 listing_id = 1; string uuid = 2; double amount = 3; }
+message BuyNowRequest { int64 listing_id = 1; string uuid = 2; string source_server = 3; }
+message AuctionOperationResponse { bool success = 1; string message = 2; double new_balance = 3; }
+message CancelAuctionRequest { int64 listing_id = 1; string uuid = 2; }
+message ListAuctionListingsRequest { string currency_code = 1; string material = 2; string status = 3; int32 page_size = 4; string page_token = 5; string seller_uuid = 6; string network_id = 7; }
+message ListAuctionListingsResponse { repeated AuctionListing listings = 1; string next_page_token = 2; int32 total_count = 3; }
+
+// Tax & Limits
+message SetTaxConfigRequest { TaxConfig config = 1; }
+message ListTaxConfigsRequest { string network_id = 1; }
+message ListTaxConfigsResponse { repeated TaxConfig configs = 1; }
+message DeleteTaxConfigRequest { int32 id = 1; }
+message SetTransactionLimitRequest { TransactionLimit limit = 1; }
+message ListTransactionLimitsRequest { int32 currency_id = 1; }
+message ListTransactionLimitsResponse { repeated TransactionLimit limits = 1; }
+message DeleteTransactionLimitRequest { int32 id = 1; }
+message CheckTransactionLimitRequest { string uuid = 1; int32 currency_id = 2; double amount = 3; string limit_scope = 4; }
+message CheckTransactionLimitResponse { bool allowed = 1; double remaining = 2; string message = 3; }
+
+// --- Notifications ---
+message GetNotifPrefsRequest { string staff_uuid = 1; }
+message UpdateNotifPrefsRequest { NotificationPreferences preferences = 1; }
+message ListNotificationsRequest { string recipient_uuid = 1; bool unread_only = 2; int32 page_size = 3; string page_token = 4; }
+message ListNotificationsResponse { repeated Notification notifications = 1; string next_page_token = 2; }
+message MarkNotifReadRequest { int64 notification_id = 1; }
+message MarkAllNotifReadRequest { string recipient_uuid = 1; }
+message GetUnreadCountRequest { string recipient_uuid = 1; }
+message UnreadCountResponse { int32 count = 1; }
+
+// --- Tasks ---
+message CreateScheduledTaskRequest { ScheduledTask task = 1; }
+message UpdateScheduledTaskRequest { ScheduledTask task = 1; }
+message DeleteScheduledTaskRequest { int32 id = 1; }
+message ListScheduledTasksRequest { string network_id = 1; int32 page_size = 2; string page_token = 3; }
+message ListScheduledTasksResponse { repeated ScheduledTask tasks = 1; string next_page_token = 2; }
+message GetTaskExecutionLogRequest { int32 task_id = 1; int32 page_size = 2; string page_token = 3; }
+message ListTaskExecutionLogResponse { repeated TaskExecutionResult entries = 1; string next_page_token = 2; }
+message RunTaskNowRequest { int32 task_id = 1; }
+
+// --- Plugin API ---
+message CustomDataGetRequest { string namespace = 1; string key = 2; string scope = 3; string scope_id = 4; }
+message CustomDataResponse { CustomData data = 1; }
+message CustomDataSetRequest { string namespace = 1; string key = 2; string value = 3; string scope = 4; string scope_id = 5; }
+message CustomDataDeleteRequest { string namespace = 1; string key = 2; string scope = 3; string scope_id = 4; }
+message CustomDataListRequest { string namespace = 1; string scope = 2; string scope_id = 3; int32 page_size = 4; string page_token = 5; }
+message CustomDataListResponse { repeated CustomData data = 1; string next_page_token = 2; }
+message CustomEventRequest { string event_type = 1; string network_id = 2; string server_name = 3; bytes payload = 4; }
+message RegisterPermissionRequest { string namespace = 1; repeated string permissions = 2; }
+
+// --- Players ---
+message GetProfileRequest { string uuid = 1; }
+message SearchPlayersRequest { string query = 1; int32 page_size = 2; string page_token = 3; }
+message SearchPlayersResponse { repeated PlayerProfile profiles = 1; string next_page_token = 2; int32 total_count = 3; }
+message GetAltsRequest { string uuid = 1; }
+message GetAltsResponse { repeated AltLink alts = 1; }
+message GetSessionHistoryRequest { string uuid = 1; int32 page_size = 2; string page_token = 3; }
+message GetSessionHistoryResponse { repeated PlayerSession sessions = 1; string next_page_token = 2; int32 total_count = 3; }
+message GetIpHistoryRequest { string uuid = 1; int32 page_size = 2; string page_token = 3; }
+message GetIpHistoryResponse { repeated PlayerIp ips = 1; string next_page_token = 2; }
+
+// --- Service API Keys ---
+message CreateServiceApiKeyRequest { string name = 1; repeated string permissions = 2; }
+message CreateServiceApiKeyResponse { ApiKey key = 1; string raw_key = 2; }
+message ListServiceApiKeysRequest {}
+message ListServiceApiKeysResponse { repeated ApiKey keys = 1; }
+message RevokeServiceApiKeyRequest { int64 id = 1; }
+
+// --- MOTD Templates ---
+message MotdTemplate {
+    int32 id = 1;
+    string network_id = 2;
+    string name = 3;
+    string line1 = 4;
+    string line2 = 5;
+    string server_icon_base64 = 6;
+    string hover_message = 7;
+    int32 sort_order = 8;
+    google.protobuf.Timestamp created_at = 9;
+}
+
+message ListMotdTemplatesRequest { string network_id = 1; }
+message ListMotdTemplatesResponse { repeated MotdTemplate templates = 1; }
+message CreateMotdTemplateRequest { MotdTemplate template = 1; }
+message UpdateMotdTemplateRequest { MotdTemplate template = 1; }
+message DeleteMotdTemplateRequest { int32 id = 1; string network_id = 2; }
+message ApplyMotdTemplateRequest { string network_id = 1; int32 template_id = 2; }
+
+// --- MOTD Rotation ---
+message MotdRotationConfig {
+    int32 id = 1;
+    string network_id = 2;
+    bool enabled = 3;
+    string schedule_type = 4;
+    int32 interval_seconds = 5;
+    string cron_expression = 6;
+    int32 current_index = 7;
+    repeated int32 template_ids = 8;
+}
+
+message GetMotdRotationRequest { string network_id = 1; }
+message GetMotdRotationResponse {
+    MotdRotationConfig config = 1;
+    repeated MotdTemplate templates = 2;
+}
+message UpdateMotdRotationRequest { MotdRotationConfig config = 1; }
+
+// --- Permission Overrides ---
+message ListPermissionOverridesRequest { int64 staff_account_id = 1; }
+message ListPermissionOverridesResponse { repeated StaffPermissionOverride overrides = 1; }
+message AddPermissionOverrideRequest {
+    int64 staff_account_id = 1;
+    string permission = 2;
+    bool granted = 3;
+    string network_id = 4;
+    string server_name = 5;
+    google.protobuf.Timestamp expires_at = 6;
+    int64 granted_by_staff_id = 7;
+    string reason = 8;
+}
+message RemovePermissionOverrideRequest { int64 id = 1; }
+
+// --- Effective Permissions ---
+message GetEffectivePermissionsRequest {
+    int64 staff_account_id = 1;
+    string network_id = 2;
+    string server_name = 3;
+}
+
+// --- Permission Registry ---
+message ListPermissionRegistryRequest {}
+message ListPermissionRegistryResponse { repeated PermissionRegistryEntry entries = 1; }
+
+// --- Staff Sessions ---
+message ListStaffSessionsRequest {
+    int64 staff_account_id = 1;
+    int32 page_size = 2;
+    string page_token = 3;
+}
+message ListStaffSessionsResponse {
+    repeated StaffLoginSession sessions = 1;
+    string next_page_token = 2;
+    int32 total_count = 3;
+}
+message RevokeStaffSessionRequest { int64 session_id = 1; }
+
+// --- Staff Activity ---
+message ListStaffActivityLogRequest {
+    int64 staff_account_id = 1;
+    int32 page_size = 2;
+    string page_token = 3;
+}
+message ListStaffActivityLogResponse {
+    repeated StaffActivityLogEntry entries = 1;
+    string next_page_token = 2;
+    int32 total_count = 3;
+}
+
+// --- Permission Audit ---
+message QueryPermissionAuditRequest {
+    string actor_uuid = 1;
+    int32 page_size = 2;
+    string page_token = 3;
+}
+message QueryPermissionAuditResponse {
+    repeated AuditLogEntry entries = 1;
+    string next_page_token = 2;
+}
+
+// --- 2FA ---
+message Setup2FARequest { int64 staff_account_id = 1; }
+message Setup2FAResponse { string secret = 1; string url = 2; }
+message Verify2FARequest { int64 staff_account_id = 1; string code = 2; }
+message Verify2FAResponse { repeated string backup_codes = 1; }
+message Disable2FARequest { int64 staff_account_id = 1; string password = 2; }
+message AuthenticateStaff2FARequest { string challenge_token = 1; string totp_code = 2; }
+
+// --- LuckPerms ---
+message LuckPermsDataRequest { string uuid = 1; string data_json = 2; }
