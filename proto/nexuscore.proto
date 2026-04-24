@@ -41,6 +41,11 @@ service NexusService {
     rpc PlayerJoin(PlayerJoinRequest) returns (PlayerJoinResponse);
     rpc PlayerLeave(PlayerLeaveRequest) returns (Empty);
     rpc PlayerServerSwitch(ServerSwitchRequest) returns (Empty);
+    // Batch variants let a plugin flush many join/leave events in a single
+    // request — primarily used by onDisable() to record all online players
+    // leaving without N round-trips.
+    rpc BatchPlayerJoin(BatchPlayerJoinRequest) returns (BatchPlayerJoinResponse);
+    rpc BatchPlayerLeave(BatchPlayerLeaveRequest) returns (BatchPlayerLeaveResponse);
 
     // --- Chat ---
     rpc SendChatMessage(ChatMessageRequest) returns (ChatMessageResponse);
@@ -291,6 +296,15 @@ service NexusService {
     rpc ValidateMicrosoftAuth(ValidateMicrosoftAuthRequest) returns (ValidateMicrosoftAuthResponse);
     rpc ValidateApiKey(ValidateApiKeyRequest) returns (ValidateApiKeyResponse);
     rpc GenerateAuthCode(GenerateAuthCodeRequest) returns (GenerateAuthCodeResponse);
+    // Exchange a still-valid JWT for a fresh one with extended expiry.
+    // Lets NexusWeb renew sessions without re-prompting for credentials.
+    rpc RefreshToken(RefreshTokenRequest) returns (RefreshTokenResponse);
+
+    // --- Service Discovery (Phase 8) ---
+    // Plugins/mods periodically call this to find live nexus-chat and
+    // nexus-health instances once the monolith is split. In Option A (current)
+    // the server returns empty endpoints and clients route everything to core.
+    rpc DiscoverServices(DiscoverServicesRequest) returns (DiscoverServicesResponse);
 
     // --- GDPR ---
     rpc RequestDataExport(GdprRequest) returns (GdprResponse);
@@ -436,6 +450,37 @@ message RegisterResponse {
     bool success = 1;
     string message = 2;
     string default_currency_code = 3;
+    // Populated once the monolith is split into core/chat/health (Phase 8).
+    // When empty, the client routes everything back to the core endpoint —
+    // backwards-compatible with pre-split plugins.
+    ServiceEndpoints endpoints = 20;
+}
+
+// --- Service Discovery (Phase 8.4a) ---
+// These messages are wire-defined now so plugin clients can consume them
+// unchanged once the microservice split lands. Current monolith returns
+// empty endpoints and callers fall back to the core host/port.
+
+message Endpoint {
+    string host = 1;
+    int32 port = 2;
+}
+
+message ServiceEndpoints {
+    repeated Endpoint chat_endpoints = 1;
+    string chat_redis_host = 2;
+    int32 chat_redis_port = 3;
+    repeated Endpoint health_endpoints = 4;
+}
+
+message DiscoverServicesRequest {}
+
+message DiscoverServicesResponse {
+    ServiceEndpoints endpoints = 1;
+    // Advisory polling interval — clients should re-discover roughly this
+    // often to pick up scale events. Zero means the caller may use its own
+    // default (5 minutes).
+    int32 recommended_refresh_seconds = 2;
 }
 
 message HeartbeatRequest {
@@ -645,6 +690,40 @@ message PlayerLeaveRequest {
     string uuid = 1;
     string network_id = 2;
     string server_name = 3;
+}
+
+// --- Batch session RPCs (4.11) ---
+// Entries carry the same fields as the single-player variants. The server
+// processes them in a single transaction where possible; partial failures
+// are surfaced via BatchPlayerJoinResponse.failed / BatchPlayerLeaveResponse.failed.
+
+message BatchPlayerJoinRequest {
+    repeated PlayerJoinRequest entries = 1;
+}
+
+message BatchPlayerJoinFailure {
+    string uuid = 1;
+    string error = 2;
+}
+
+message BatchPlayerJoinResponse {
+    // Successful joins, keyed by request index in BatchPlayerJoinRequest.entries.
+    repeated PlayerJoinResponse results = 1;
+    repeated BatchPlayerJoinFailure failed = 2;
+}
+
+message BatchPlayerLeaveRequest {
+    repeated PlayerLeaveRequest entries = 1;
+}
+
+message BatchPlayerLeaveFailure {
+    string uuid = 1;
+    string error = 2;
+}
+
+message BatchPlayerLeaveResponse {
+    int32 processed = 1;
+    repeated BatchPlayerLeaveFailure failed = 2;
 }
 
 message ServerSwitchRequest {
@@ -1450,6 +1529,17 @@ message ValidateMicrosoftAuthRequest { string access_token = 1; }
 message ValidateMicrosoftAuthResponse { bool valid = 1; string player_uuid = 2; string session_token = 3; }
 message ValidateApiKeyRequest { string key = 1; }
 message ValidateApiKeyResponse { bool valid = 1; ApiKey api_key = 2; }
+
+// --- Token refresh (3.9) ---
+// Callers pass their current JWT; server validates it (must be non-expired or
+// within a short grace window) and issues a new token with a refreshed expiry.
+message RefreshTokenRequest { string token = 1; }
+message RefreshTokenResponse {
+    string token = 1;
+    // Unix-seconds expiry so the client can schedule the next refresh without
+    // needing to decode the JWT payload itself.
+    int64 expires_at = 2;
+}
 message GenerateAuthCodeRequest { string player_uuid = 1; }
 message GenerateAuthCodeResponse { string code = 1; google.protobuf.Timestamp expires_at = 2; }
 
