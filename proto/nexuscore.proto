@@ -166,6 +166,8 @@ service NexusService {
     rpc Verify2FA(Verify2FARequest) returns (Verify2FAResponse);
     rpc Disable2FA(Disable2FARequest) returns (Empty);
     rpc AuthenticateStaff2FA(AuthenticateStaff2FARequest) returns (AuthenticateStaffResponse);
+    rpc ChangeStaffPassword(ChangeStaffPasswordRequest) returns (Empty);
+    rpc ResetStaffPassword(ResetStaffPasswordRequest) returns (Empty);
 
     // --- Contributors ---
     rpc ListContributorRoles(ListContributorRolesRequest) returns (ListContributorRolesResponse);
@@ -2005,6 +2007,16 @@ message Verify2FARequest { int64 staff_account_id = 1; string code = 2; }
 message Verify2FAResponse { repeated string backup_codes = 1; }
 message Disable2FARequest { int64 staff_account_id = 1; string password = 2; }
 message AuthenticateStaff2FARequest { string challenge_token = 1; string totp_code = 2; }
+message ChangeStaffPasswordRequest {
+    int64 staff_account_id = 1;
+    string current_password = 2;
+    string new_password = 3;
+}
+message ResetStaffPasswordRequest {
+    int64 staff_account_id = 1;
+    string new_password = 2;
+    int64 actor_staff_account_id = 3;
+}
 
 // --- LuckPerms ---
 message LuckPermsDataRequest { string uuid = 1; string data_json = 2; }
