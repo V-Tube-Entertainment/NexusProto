@@ -1800,13 +1800,31 @@ message BankTransactionHistoryResponse { repeated BankTransaction transactions =
 message CreateShopRequest { Shop shop = 1; }
 message UpdateShopRequest { Shop shop = 1; }
 message DeleteShopRequest { int64 id = 1; }
-message ListShopsRequest { string network_id = 1; string owner_uuid = 2; string shop_type = 3; }
-message ListShopsResponse { repeated Shop shops = 1; }
+message ListShopsRequest {
+    string network_id = 1;
+    string owner_uuid = 2;
+    string shop_type = 3;
+    int32 page_size = 4;
+    string page_token = 5;
+}
+message ListShopsResponse {
+    repeated Shop shops = 1;
+    string next_page_token = 2;
+    int32 total_count = 3;
+}
 message AddShopItemRequest { ShopItem item = 1; }
 message UpdateShopItemRequest { ShopItem item = 1; }
 message RemoveShopItemRequest { int64 id = 1; }
-message ListShopItemsRequest { int64 shop_id = 1; }
-message ListShopItemsResponse { repeated ShopItem items = 1; }
+message ListShopItemsRequest {
+    int64 shop_id = 1;
+    int32 page_size = 2;
+    string page_token = 3;
+}
+message ListShopItemsResponse {
+    repeated ShopItem items = 1;
+    string next_page_token = 2;
+    int32 total_count = 3;
+}
 message ShopTransactRequest { int64 shop_id = 1; int64 shop_item_id = 2; string uuid = 3; int32 quantity = 4; string action = 5; string source_server = 6; }
 message ShopTransactResponse { bool success = 1; string message = 2; double total_cost = 3; double tax_amount = 4; double new_balance = 5; }
 
