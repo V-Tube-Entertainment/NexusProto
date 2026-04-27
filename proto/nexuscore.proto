@@ -386,6 +386,21 @@ service NexusService {
     rpc ListShopItems(ListShopItemsRequest) returns (ListShopItemsResponse);
     rpc ShopTransact(ShopTransactRequest) returns (ShopTransactResponse);
 
+    // --- Modpacks ---
+    rpc CreateModpack(CreateModpackRequest) returns (Modpack);
+    rpc UpdateModpack(UpdateModpackRequest) returns (Modpack);
+    rpc DeleteModpack(DeleteModpackRequest) returns (Empty);
+    rpc GetModpack(GetModpackRequest) returns (Modpack);
+    rpc ListModpacks(ListModpacksRequest) returns (ListModpacksResponse);
+    rpc RefreshModpack(RefreshModpackRequest) returns (Modpack);
+
+    // --- Homepage Widgets ---
+    rpc CreateHomepageWidget(CreateHomepageWidgetRequest) returns (HomepageWidget);
+    rpc UpdateHomepageWidget(UpdateHomepageWidgetRequest) returns (HomepageWidget);
+    rpc DeleteHomepageWidget(DeleteHomepageWidgetRequest) returns (Empty);
+    rpc ListHomepageWidgets(ListHomepageWidgetsRequest) returns (ListHomepageWidgetsResponse);
+    rpc ReorderHomepageWidgets(ReorderHomepageWidgetsRequest) returns (Empty);
+
     // --- Auctions ---
     rpc CreateAuctionListing(CreateAuctionListingRequest) returns (AuctionListing);
     rpc PlaceAuctionBid(PlaceAuctionBidRequest) returns (AuctionOperationResponse);
@@ -1155,6 +1170,7 @@ message DeleteStaffAccountRequest {
 message ListStaffRequest {
     int32 page_size = 1;
     string page_token = 2;
+    string query = 3;
 }
 
 message ListStaffResponse {
@@ -2021,3 +2037,32 @@ message ResetStaffPasswordRequest {
 
 // --- LuckPerms ---
 message LuckPermsDataRequest { string uuid = 1; string data_json = 2; }
+
+// --- Modpacks ---
+message CreateModpackRequest { Modpack modpack = 1; }
+message UpdateModpackRequest { Modpack modpack = 1; }
+message DeleteModpackRequest { int64 id = 1; }
+message GetModpackRequest { int64 id = 1; }
+message ListModpacksRequest {
+    string network_id = 1;            // optional filter
+    bool featured_only = 2;
+    int32 page_size = 3;
+    string page_token = 4;
+}
+message ListModpacksResponse {
+    repeated Modpack modpacks = 1;
+    string next_page_token = 2;
+    int32 total_count = 3;
+}
+message RefreshModpackRequest { int64 id = 1; }
+
+// --- Homepage Widgets ---
+message CreateHomepageWidgetRequest { HomepageWidget widget = 1; }
+message UpdateHomepageWidgetRequest { HomepageWidget widget = 1; }
+message DeleteHomepageWidgetRequest { int64 id = 1; }
+message ListHomepageWidgetsRequest {
+    bool include_disabled = 1;
+    bool public_only = 2;             // public homepage callers set true
+}
+message ListHomepageWidgetsResponse { repeated HomepageWidget widgets = 1; }
+message ReorderHomepageWidgetsRequest { repeated int64 ordered_ids = 1; }
