@@ -1099,6 +1099,44 @@ message LeaderboardConfig {
 }
 
 // ============================================================
+// Modpacks (CurseForge-linked, per Network)
+// ============================================================
+
+message Modpack {
+    int64 id = 1;
+    string network_id = 2;
+    int64 curseforge_project_id = 3;
+    string display_name = 4;          // override; falls back to cf_name
+    string pinned_version = 5;        // optional
+    bool featured = 6;
+    // Synced from CurseForge (read-only via API):
+    string cf_name = 10;
+    string cf_summary = 11;
+    string cf_logo_url = 12;
+    string cf_latest_version = 13;
+    string cf_website_url = 14;
+    int64 cf_download_count = 15;
+    google.protobuf.Timestamp cf_last_updated = 16;
+    google.protobuf.Timestamp synced_at = 17;
+    google.protobuf.Timestamp created_at = 18;
+}
+
+// ============================================================
+// Homepage Widgets (configurable public landing page)
+// ============================================================
+
+message HomepageWidget {
+    int64 id = 1;
+    string widget_type = 2;
+    int32 position = 3;
+    bool enabled = 4;
+    bool public = 5;                  // false = staff-only widgets
+    string title_override = 6;
+    string config_json = 7;
+    google.protobuf.Timestamp created_at = 8;
+}
+
+// ============================================================
 // Common / Utility
 // ============================================================
 
