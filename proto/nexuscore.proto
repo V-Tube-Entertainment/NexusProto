@@ -294,8 +294,8 @@ service NexusService {
 
     // --- Auth ---
     rpc AuthenticateStaff(AuthenticateStaffRequest) returns (AuthenticateStaffResponse);
-    rpc ValidateAuthCode(ValidateAuthCodeRequest) returns (ValidateAuthCodeResponse);
-    rpc ValidateMicrosoftAuth(ValidateMicrosoftAuthRequest) returns (ValidateMicrosoftAuthResponse);
+    rpc RegisterPlayerLogin(RegisterPlayerLoginRequest) returns (RegisterPlayerLoginResponse);
+    rpc LoginPlayer(LoginPlayerRequest) returns (LoginPlayerResponse);
     rpc ValidateApiKey(ValidateApiKeyRequest) returns (ValidateApiKeyResponse);
     rpc GenerateAuthCode(GenerateAuthCodeRequest) returns (GenerateAuthCodeResponse);
     // Exchange a still-valid JWT for a fresh one with extended expiry.
@@ -1542,10 +1542,27 @@ message AuthenticateStaffResponse {
     bool requires_2fa = 3;
     string challenge_token = 4;
 }
-message ValidateAuthCodeRequest { string code = 1; }
-message ValidateAuthCodeResponse { bool valid = 1; string player_uuid = 2; string session_token = 3; }
-message ValidateMicrosoftAuthRequest { string access_token = 1; }
-message ValidateMicrosoftAuthResponse { bool valid = 1; string player_uuid = 2; string session_token = 3; }
+message RegisterPlayerLoginRequest {
+    string code = 1;
+    string email = 2;
+    string password = 3;
+}
+message RegisterPlayerLoginResponse {
+    bool valid = 1;
+    string player_uuid = 2;
+    string session_token = 3;
+    string error = 4;
+}
+message LoginPlayerRequest {
+    string email = 1;
+    string password = 2;
+}
+message LoginPlayerResponse {
+    bool valid = 1;
+    string player_uuid = 2;
+    string session_token = 3;
+    string error = 4;
+}
 message ValidateApiKeyRequest { string key = 1; }
 message ValidateApiKeyResponse { bool valid = 1; ApiKey api_key = 2; }
 
