@@ -290,7 +290,10 @@ service NexusService {
     rpc ListPages(ListPagesRequest) returns (ListPagesResponse);
     rpc GetPageBySlug(GetPageBySlugRequest) returns (StaticPage);
     rpc ListLeaderboardConfigs(ListLeaderboardConfigsRequest) returns (ListLeaderboardConfigsResponse);
+    rpc CreateLeaderboardConfig(CreateLeaderboardConfigRequest) returns (LeaderboardConfig);
     rpc UpdateLeaderboardConfig(UpdateLeaderboardConfigRequest) returns (LeaderboardConfig);
+    rpc DeleteLeaderboardConfig(DeleteLeaderboardConfigRequest) returns (Empty);
+    rpc ListLeaderboardMetrics(ListLeaderboardMetricsRequest) returns (ListLeaderboardMetricsResponse);
 
     // --- Auth ---
     rpc AuthenticateStaff(AuthenticateStaffRequest) returns (AuthenticateStaffResponse);
@@ -1532,7 +1535,12 @@ message ListPagesResponse { repeated StaticPage pages = 1; string next_page_toke
 message GetPageBySlugRequest { string slug = 1; }
 message ListLeaderboardConfigsRequest { string network_id = 1; }
 message ListLeaderboardConfigsResponse { repeated LeaderboardConfig configs = 1; }
+message CreateLeaderboardConfigRequest { LeaderboardConfig config = 1; }
 message UpdateLeaderboardConfigRequest { LeaderboardConfig config = 1; }
+message DeleteLeaderboardConfigRequest { int64 id = 1; }
+message ListLeaderboardMetricsRequest {}
+message LeaderboardMetric { string metric = 1; string display_name = 2; string description = 3; string unit = 4; }
+message ListLeaderboardMetricsResponse { repeated LeaderboardMetric metrics = 1; }
 
 // --- Auth ---
 message AuthenticateStaffRequest { string username = 1; string password = 2; }
