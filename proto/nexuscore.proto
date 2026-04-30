@@ -441,6 +441,11 @@ service NexusService {
     rpc CustomDataSet(CustomDataSetRequest) returns (CustomDataResponse);
     rpc CustomDataDelete(CustomDataDeleteRequest) returns (Empty);
     rpc CustomDataList(CustomDataListRequest) returns (CustomDataListResponse);
+    rpc RegisterMetricDefinition(RegisterMetricDefinitionRequest) returns (MetricDefinition);
+    rpc ListMetricDefinitions(ListMetricDefinitionsRequest) returns (ListMetricDefinitionsResponse);
+    rpc SubmitMetricDatapoint(SubmitMetricDatapointRequest) returns (MetricDatapoint);
+    rpc ListMetricDatapoints(ListMetricDatapointsRequest) returns (ListMetricDatapointsResponse);
+    rpc BatchSubmitMetricDatapoints(BatchSubmitMetricDatapointsRequest) returns (BatchSubmitMetricDatapointsResponse);
     rpc EmitCustomEvent(CustomEventRequest) returns (Empty);
     rpc RegisterCustomPermission(RegisterPermissionRequest) returns (Empty);
 
@@ -1920,6 +1925,14 @@ message CustomDataSetRequest { string namespace = 1; string key = 2; string valu
 message CustomDataDeleteRequest { string namespace = 1; string key = 2; string scope = 3; string scope_id = 4; }
 message CustomDataListRequest { string namespace = 1; string scope = 2; string scope_id = 3; int32 page_size = 4; string page_token = 5; }
 message CustomDataListResponse { repeated CustomData data = 1; string next_page_token = 2; }
+message RegisterMetricDefinitionRequest { MetricDefinition definition = 1; }
+message ListMetricDefinitionsRequest { string namespace = 1; bool include_disabled = 2; }
+message ListMetricDefinitionsResponse { repeated MetricDefinition definitions = 1; }
+message SubmitMetricDatapointRequest { MetricDatapoint datapoint = 1; }
+message ListMetricDatapointsRequest { string namespace = 1; string metric_key = 2; string network_id = 3; string server_name = 4; string player_uuid = 5; int32 page_size = 6; string page_token = 7; }
+message ListMetricDatapointsResponse { repeated MetricDatapoint datapoints = 1; string next_page_token = 2; }
+message BatchSubmitMetricDatapointsRequest { repeated MetricDatapoint datapoints = 1; }
+message BatchSubmitMetricDatapointsResponse { int32 accepted = 1; repeated string errors = 2; }
 message CustomEventRequest { string event_type = 1; string network_id = 2; string server_name = 3; bytes payload = 4; }
 message RegisterPermissionRequest { string namespace = 1; repeated string permissions = 2; }
 
