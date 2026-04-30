@@ -62,6 +62,7 @@ message ApiKey {
     google.protobuf.Timestamp created_at = 5;
     google.protobuf.Timestamp last_used = 6;
     bool active = 7;
+    int64 site_id = 8;
 }
 
 // ============================================================
@@ -1163,6 +1164,180 @@ message HomepageWidget {
     string title_override = 6;
     string config_json = 7;
     google.protobuf.Timestamp created_at = 8;
+}
+
+// ============================================================
+// Sites, Subsites, and Public Render Blocks
+// ============================================================
+
+message Site {
+    int64 id = 1;
+    string slug = 2;
+    string name = 3;
+    string site_type = 4;
+    string primary_domain = 5;
+    string network_id = 6;
+    bool is_global = 7;
+    bool is_default = 8;
+    bool enabled = 9;
+    bool public = 10;
+    string status = 11;
+    string access_mode = 12;
+    string access_config_json = 13;
+    string template_key = 14;
+    int64 api_key_id = 15;
+    string theme_config_json = 16;
+    string navigation_json = 17;
+    string settings_json = 18;
+    string meta_title = 19;
+    string meta_description = 20;
+    string og_image_url = 21;
+    string favicon_url = 22;
+    google.protobuf.Timestamp publish_at = 23;
+    google.protobuf.Timestamp unpublish_at = 24;
+    string created_by_uuid = 25;
+    string updated_by_uuid = 26;
+    google.protobuf.Timestamp created_at = 27;
+    google.protobuf.Timestamp updated_at = 28;
+}
+
+message Subsite {
+    int64 id = 1;
+    int64 site_id = 2;
+    string slug = 3;
+    string name = 4;
+    string scope_type = 5;
+    string scope_value = 6;
+    bool enabled = 7;
+    bool public = 8;
+    string status = 9;
+    string access_mode = 10;
+    string access_config_json = 11;
+    string theme_config_json = 12;
+    string settings_json = 13;
+    string meta_title = 14;
+    string meta_description = 15;
+    string og_image_url = 16;
+    google.protobuf.Timestamp publish_at = 17;
+    google.protobuf.Timestamp unpublish_at = 18;
+    string created_by_uuid = 19;
+    string updated_by_uuid = 20;
+    google.protobuf.Timestamp created_at = 21;
+    google.protobuf.Timestamp updated_at = 22;
+}
+
+message SiteContentBlock {
+    int64 id = 1;
+    int64 site_id = 2;
+    int64 subsite_id = 3;
+    string block_type = 4;
+    string title = 5;
+    bool enabled = 6;
+    string status = 7;
+    int32 sort_order = 8;
+    string config_json = 9;
+    string created_by_uuid = 10;
+    string updated_by_uuid = 11;
+    google.protobuf.Timestamp created_at = 12;
+    google.protobuf.Timestamp updated_at = 13;
+}
+
+message SiteContentBlockVersion {
+    int64 id = 1;
+    int64 block_id = 2;
+    int32 version_number = 3;
+    string title = 4;
+    bool enabled = 5;
+    string status = 6;
+    int32 sort_order = 7;
+    string config_json = 8;
+    string created_by_uuid = 9;
+    google.protobuf.Timestamp created_at = 10;
+}
+
+message SiteNavItem {
+    int64 id = 1;
+    int64 site_id = 2;
+    int64 parent_id = 3;
+    string label = 4;
+    string href = 5;
+    string target = 6;
+    bool visible = 7;
+    int32 sort_order = 8;
+    string required_permission = 9;
+    string access_mode = 10;
+    google.protobuf.Timestamp created_at = 11;
+    google.protobuf.Timestamp updated_at = 12;
+}
+
+message WorldMap {
+    int64 id = 1;
+    string network_id = 2;
+    string server_name = 3;
+    string provider = 4;
+    string display_name = 5;
+    string world_name = 6;
+    string base_url = 7;
+    string embed_url = 8;
+    string thumbnail_url = 9;
+    bool enabled = 10;
+    bool public = 11;
+    string config_json = 12;
+    google.protobuf.Timestamp created_at = 13;
+    google.protobuf.Timestamp updated_at = 14;
+}
+
+message WorldMapMarker {
+    int64 id = 1;
+    int64 map_id = 2;
+    string marker_group = 3;
+    string label = 4;
+    string marker_type = 5;
+    double x = 6;
+    double y = 7;
+    double z = 8;
+    string icon = 9;
+    string color = 10;
+    string description = 11;
+    string link_url = 12;
+    bool visible = 13;
+    google.protobuf.Timestamp created_at = 14;
+    google.protobuf.Timestamp updated_at = 15;
+}
+
+message SiteAsset {
+    int64 id = 1;
+    int64 site_id = 2;
+    int64 subsite_id = 3;
+    string asset_type = 4;
+    string name = 5;
+    string url = 6;
+    string mime_type = 7;
+    int64 size_bytes = 8;
+    string metadata_json = 9;
+    string created_by_uuid = 10;
+    google.protobuf.Timestamp created_at = 11;
+}
+
+message SiteRenderSnapshot {
+    Site site = 1;
+    repeated SiteNavItem navigation = 2;
+    repeated SiteAsset assets = 3;
+    repeated SiteContentBlock content_blocks = 4;
+    repeated WorldMap world_maps = 5;
+    string cache_version = 6;
+    google.protobuf.Timestamp generated_at = 7;
+}
+
+message SubsiteRenderSnapshot {
+    Site site = 1;
+    Subsite subsite = 2;
+    repeated SiteNavItem navigation = 3;
+    repeated SiteAsset assets = 4;
+    repeated SiteContentBlock content_blocks = 5;
+    repeated WorldMap world_maps = 6;
+    string cache_version = 7;
+    google.protobuf.Timestamp generated_at = 8;
 }
 
 // ============================================================
