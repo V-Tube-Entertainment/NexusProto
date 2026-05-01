@@ -290,12 +290,15 @@ service NexusService {
     rpc ListPages(ListPagesRequest) returns (ListPagesResponse);
     rpc GetPageBySlug(GetPageBySlugRequest) returns (StaticPage);
     rpc ListLeaderboardConfigs(ListLeaderboardConfigsRequest) returns (ListLeaderboardConfigsResponse);
+    rpc CreateLeaderboardConfig(CreateLeaderboardConfigRequest) returns (LeaderboardConfig);
     rpc UpdateLeaderboardConfig(UpdateLeaderboardConfigRequest) returns (LeaderboardConfig);
+    rpc DeleteLeaderboardConfig(DeleteLeaderboardConfigRequest) returns (Empty);
+    rpc ListLeaderboardMetrics(ListLeaderboardMetricsRequest) returns (ListLeaderboardMetricsResponse);
 
     // --- Auth ---
     rpc AuthenticateStaff(AuthenticateStaffRequest) returns (AuthenticateStaffResponse);
-    rpc ValidateAuthCode(ValidateAuthCodeRequest) returns (ValidateAuthCodeResponse);
-    rpc ValidateMicrosoftAuth(ValidateMicrosoftAuthRequest) returns (ValidateMicrosoftAuthResponse);
+    rpc RegisterPlayerLogin(RegisterPlayerLoginRequest) returns (RegisterPlayerLoginResponse);
+    rpc LoginPlayer(LoginPlayerRequest) returns (LoginPlayerResponse);
     rpc ValidateApiKey(ValidateApiKeyRequest) returns (ValidateApiKeyResponse);
     rpc GenerateAuthCode(GenerateAuthCodeRequest) returns (GenerateAuthCodeResponse);
     // Exchange a still-valid JWT for a fresh one with extended expiry.
@@ -438,6 +441,11 @@ service NexusService {
     rpc CustomDataSet(CustomDataSetRequest) returns (CustomDataResponse);
     rpc CustomDataDelete(CustomDataDeleteRequest) returns (Empty);
     rpc CustomDataList(CustomDataListRequest) returns (CustomDataListResponse);
+    rpc RegisterMetricDefinition(RegisterMetricDefinitionRequest) returns (MetricDefinition);
+    rpc ListMetricDefinitions(ListMetricDefinitionsRequest) returns (ListMetricDefinitionsResponse);
+    rpc SubmitMetricDatapoint(SubmitMetricDatapointRequest) returns (MetricDatapoint);
+    rpc ListMetricDatapoints(ListMetricDatapointsRequest) returns (ListMetricDatapointsResponse);
+    rpc BatchSubmitMetricDatapoints(BatchSubmitMetricDatapointsRequest) returns (BatchSubmitMetricDatapointsResponse);
     rpc EmitCustomEvent(CustomEventRequest) returns (Empty);
     rpc RegisterCustomPermission(RegisterPermissionRequest) returns (Empty);
 
@@ -1532,7 +1540,12 @@ message ListPagesResponse { repeated StaticPage pages = 1; string next_page_toke
 message GetPageBySlugRequest { string slug = 1; }
 message ListLeaderboardConfigsRequest { string network_id = 1; }
 message ListLeaderboardConfigsResponse { repeated LeaderboardConfig configs = 1; }
+message CreateLeaderboardConfigRequest { LeaderboardConfig config = 1; }
 message UpdateLeaderboardConfigRequest { LeaderboardConfig config = 1; }
+message DeleteLeaderboardConfigRequest { int64 id = 1; }
+message ListLeaderboardMetricsRequest {}
+message LeaderboardMetric { string metric = 1; string display_name = 2; string description = 3; string unit = 4; }
+message ListLeaderboardMetricsResponse { repeated LeaderboardMetric metrics = 1; }
 
 // --- Auth ---
 message AuthenticateStaffRequest { string username = 1; string password = 2; }
@@ -1542,10 +1555,27 @@ message AuthenticateStaffResponse {
     bool requires_2fa = 3;
     string challenge_token = 4;
 }
-message ValidateAuthCodeRequest { string code = 1; }
-message ValidateAuthCodeResponse { bool valid = 1; string player_uuid = 2; string session_token = 3; }
-message ValidateMicrosoftAuthRequest { string access_token = 1; }
-message ValidateMicrosoftAuthResponse { bool valid = 1; string player_uuid = 2; string session_token = 3; }
+message RegisterPlayerLoginRequest {
+    string code = 1;
+    string email = 2;
+    string password = 3;
+}
+message RegisterPlayerLoginResponse {
+    bool valid = 1;
+    string player_uuid = 2;
+    string session_token = 3;
+    string error = 4;
+}
+message LoginPlayerRequest {
+    string email = 1;
+    string password = 2;
+}
+message LoginPlayerResponse {
+    bool valid = 1;
+    string player_uuid = 2;
+    string session_token = 3;
+    string error = 4;
+}
 message ValidateApiKeyRequest { string key = 1; }
 message ValidateApiKeyResponse { bool valid = 1; ApiKey api_key = 2; }
 
@@ -1895,6 +1925,14 @@ message CustomDataSetRequest { string namespace = 1; string key = 2; string valu
 message CustomDataDeleteRequest { string namespace = 1; string key = 2; string scope = 3; string scope_id = 4; }
 message CustomDataListRequest { string namespace = 1; string scope = 2; string scope_id = 3; int32 page_size = 4; string page_token = 5; }
 message CustomDataListResponse { repeated CustomData data = 1; string next_page_token = 2; }
+message RegisterMetricDefinitionRequest { MetricDefinition definition = 1; }
+message ListMetricDefinitionsRequest { string namespace = 1; bool include_disabled = 2; }
+message ListMetricDefinitionsResponse { repeated MetricDefinition definitions = 1; }
+message SubmitMetricDatapointRequest { MetricDatapoint datapoint = 1; }
+message ListMetricDatapointsRequest { string namespace = 1; string metric_key = 2; string network_id = 3; string server_name = 4; string player_uuid = 5; int32 page_size = 6; string page_token = 7; }
+message ListMetricDatapointsResponse { repeated MetricDatapoint datapoints = 1; string next_page_token = 2; }
+message BatchSubmitMetricDatapointsRequest { repeated MetricDatapoint datapoints = 1; }
+message BatchSubmitMetricDatapointsResponse { int32 accepted = 1; repeated string errors = 2; }
 message CustomEventRequest { string event_type = 1; string network_id = 2; string server_name = 3; bytes payload = 4; }
 message RegisterPermissionRequest { string namespace = 1; repeated string permissions = 2; }
 

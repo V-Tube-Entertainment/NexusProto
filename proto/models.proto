@@ -912,6 +912,35 @@ message CustomData {
     string scope_id = 6;
 }
 
+message MetricDefinition {
+    int64 id = 1;
+    string namespace = 2;
+    string metric_key = 3;
+    string display_name = 4;
+    string description = 5;
+    string unit = 6;
+    string aggregation = 7; // SUM, MAX, MIN, AVG, LATEST
+    bool higher_is_better = 8;
+    bool enabled = 9;
+    google.protobuf.Timestamp created_at = 10;
+    google.protobuf.Timestamp updated_at = 11;
+}
+
+message MetricDatapoint {
+    int64 id = 1;
+    string namespace = 2;
+    string metric_key = 3;
+    string network_id = 4;
+    string server_name = 5;
+    string player_uuid = 6;
+    string player_name = 7;
+    double value = 8;
+    string source = 9;
+    string dimensions_json = 10;
+    google.protobuf.Timestamp recorded_at = 11;
+    google.protobuf.Timestamp created_at = 12;
+}
+
 message ManagedServer {
     int64 id = 1;
     string network_id = 2;
