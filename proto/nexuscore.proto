@@ -1602,7 +1602,7 @@ message ListSiteNavItemsResponse { repeated SiteNavItem items = 1; }
 message CreateWorldMapRequest { WorldMap map = 1; }
 message UpdateWorldMapRequest { WorldMap map = 1; }
 message DeleteWorldMapRequest { int64 id = 1; }
-message ListWorldMapsRequest { string network_id = 1; string server_name = 2; bool public_only = 3; }
+message ListWorldMapsRequest { string network_id = 1; string server_name = 2; bool public_only = 3; int64 site_id = 4; int64 subsite_id = 5; }
 message ListWorldMapsResponse { repeated WorldMap maps = 1; }
 message GetWorldMapRequest { int64 id = 1; }
 message CreateSiteAssetRequest { SiteAsset asset = 1; }
@@ -2160,6 +2160,8 @@ message ListModpacksRequest {
     bool featured_only = 2;
     int32 page_size = 3;
     string page_token = 4;
+    int64 site_id = 5;
+    int64 subsite_id = 6;
 }
 message ListModpacksResponse {
     repeated Modpack modpacks = 1;
@@ -2175,6 +2177,8 @@ message DeleteHomepageWidgetRequest { int64 id = 1; }
 message ListHomepageWidgetsRequest {
     bool include_disabled = 1;
     bool public_only = 2;             // public homepage callers set true
+    int64 site_id = 3;
+    int64 subsite_id = 4;
 }
 message ListHomepageWidgetsResponse { repeated HomepageWidget widgets = 1; }
 message ReorderHomepageWidgetsRequest { repeated int64 ordered_ids = 1; }
