@@ -1275,6 +1275,21 @@ message SiteNavItem {
     google.protobuf.Timestamp updated_at = 12;
 }
 
+message SiteTemplate {
+    int64 id = 1;
+    string template_key = 2;
+    string name = 3;
+    string description = 4;
+    bool enabled = 5;
+    string nav_json = 6;
+    string blocks_json = 7;
+    string settings_json = 8;
+    string created_by_uuid = 9;
+    string updated_by_uuid = 10;
+    google.protobuf.Timestamp created_at = 11;
+    google.protobuf.Timestamp updated_at = 12;
+}
+
 message WorldMap {
     int64 id = 1;
     string network_id = 2;

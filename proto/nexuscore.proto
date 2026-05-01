@@ -311,6 +311,9 @@ service NexusService {
     rpc UpdateSiteNavItem(UpdateSiteNavItemRequest) returns (SiteNavItem);
     rpc DeleteSiteNavItem(DeleteSiteNavItemRequest) returns (Empty);
     rpc ListSiteNavItems(ListSiteNavItemsRequest) returns (ListSiteNavItemsResponse);
+    rpc ListSiteTemplates(ListSiteTemplatesRequest) returns (ListSiteTemplatesResponse);
+    rpc UpsertSiteTemplate(UpsertSiteTemplateRequest) returns (SiteTemplate);
+    rpc DeleteSiteTemplate(DeleteSiteTemplateRequest) returns (Empty);
     rpc CreateWorldMap(CreateWorldMapRequest) returns (WorldMap);
     rpc UpdateWorldMap(UpdateWorldMapRequest) returns (WorldMap);
     rpc DeleteWorldMap(DeleteWorldMapRequest) returns (Empty);
@@ -1599,6 +1602,10 @@ message UpdateSiteNavItemRequest { SiteNavItem item = 1; }
 message DeleteSiteNavItemRequest { int64 id = 1; }
 message ListSiteNavItemsRequest { int64 site_id = 1; bool visible_only = 2; }
 message ListSiteNavItemsResponse { repeated SiteNavItem items = 1; }
+message ListSiteTemplatesRequest { bool include_disabled = 1; }
+message ListSiteTemplatesResponse { repeated SiteTemplate templates = 1; }
+message UpsertSiteTemplateRequest { SiteTemplate template = 1; }
+message DeleteSiteTemplateRequest { int64 id = 1; string template_key = 2; }
 message CreateWorldMapRequest { WorldMap map = 1; }
 message UpdateWorldMapRequest { WorldMap map = 1; }
 message DeleteWorldMapRequest { int64 id = 1; }
