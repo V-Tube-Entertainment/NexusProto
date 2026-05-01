@@ -289,6 +289,39 @@ service NexusService {
     rpc DeletePage(DeletePageRequest) returns (Empty);
     rpc ListPages(ListPagesRequest) returns (ListPagesResponse);
     rpc GetPageBySlug(GetPageBySlugRequest) returns (StaticPage);
+    rpc CreateSite(CreateSiteRequest) returns (Site);
+    rpc UpdateSite(UpdateSiteRequest) returns (Site);
+    rpc DeleteSite(DeleteSiteRequest) returns (Empty);
+    rpc ListSites(ListSitesRequest) returns (ListSitesResponse);
+    rpc GetSite(GetSiteRequest) returns (Site);
+    rpc ResolveSiteByDomain(ResolveSiteByDomainRequest) returns (Site);
+    rpc RotateSiteApiKey(RotateSiteApiKeyRequest) returns (RotateSiteApiKeyResponse);
+    rpc CreateSubsite(CreateSubsiteRequest) returns (Subsite);
+    rpc UpdateSubsite(UpdateSubsiteRequest) returns (Subsite);
+    rpc DeleteSubsite(DeleteSubsiteRequest) returns (Empty);
+    rpc ListSubsites(ListSubsitesRequest) returns (ListSubsitesResponse);
+    rpc GetSubsiteBySlug(GetSubsiteBySlugRequest) returns (Subsite);
+    rpc CreateSiteContentBlock(CreateSiteContentBlockRequest) returns (SiteContentBlock);
+    rpc UpdateSiteContentBlock(UpdateSiteContentBlockRequest) returns (SiteContentBlock);
+    rpc DeleteSiteContentBlock(DeleteSiteContentBlockRequest) returns (Empty);
+    rpc ListSiteContentBlocks(ListSiteContentBlocksRequest) returns (ListSiteContentBlocksResponse);
+    rpc ListSiteContentBlockVersions(ListSiteContentBlockVersionsRequest) returns (ListSiteContentBlockVersionsResponse);
+    rpc RollbackSiteContentBlock(RollbackSiteContentBlockRequest) returns (SiteContentBlock);
+    rpc CreateSiteNavItem(CreateSiteNavItemRequest) returns (SiteNavItem);
+    rpc UpdateSiteNavItem(UpdateSiteNavItemRequest) returns (SiteNavItem);
+    rpc DeleteSiteNavItem(DeleteSiteNavItemRequest) returns (Empty);
+    rpc ListSiteNavItems(ListSiteNavItemsRequest) returns (ListSiteNavItemsResponse);
+    rpc CreateWorldMap(CreateWorldMapRequest) returns (WorldMap);
+    rpc UpdateWorldMap(UpdateWorldMapRequest) returns (WorldMap);
+    rpc DeleteWorldMap(DeleteWorldMapRequest) returns (Empty);
+    rpc ListWorldMaps(ListWorldMapsRequest) returns (ListWorldMapsResponse);
+    rpc GetWorldMap(GetWorldMapRequest) returns (WorldMap);
+    rpc CreateSiteAsset(CreateSiteAssetRequest) returns (SiteAsset);
+    rpc UpdateSiteAsset(UpdateSiteAssetRequest) returns (SiteAsset);
+    rpc DeleteSiteAsset(DeleteSiteAssetRequest) returns (Empty);
+    rpc ListSiteAssets(ListSiteAssetsRequest) returns (ListSiteAssetsResponse);
+    rpc GetSiteRenderSnapshot(GetSiteRenderSnapshotRequest) returns (SiteRenderSnapshot);
+    rpc GetSubsiteRenderSnapshot(GetSubsiteRenderSnapshotRequest) returns (SubsiteRenderSnapshot);
     rpc ListLeaderboardConfigs(ListLeaderboardConfigsRequest) returns (ListLeaderboardConfigsResponse);
     rpc CreateLeaderboardConfig(CreateLeaderboardConfigRequest) returns (LeaderboardConfig);
     rpc UpdateLeaderboardConfig(UpdateLeaderboardConfigRequest) returns (LeaderboardConfig);
@@ -1538,6 +1571,47 @@ message DeletePageRequest { int32 id = 1; }
 message ListPagesRequest { bool published_only = 1; int32 page_size = 2; string page_token = 3; }
 message ListPagesResponse { repeated StaticPage pages = 1; string next_page_token = 2; }
 message GetPageBySlugRequest { string slug = 1; }
+message CreateSiteRequest { Site site = 1; bool issue_api_key = 2; }
+message UpdateSiteRequest { Site site = 1; }
+message DeleteSiteRequest { int64 id = 1; }
+message ListSitesRequest { bool include_archived = 1; bool public_only = 2; string network_id = 3; }
+message ListSitesResponse { repeated Site sites = 1; }
+message GetSiteRequest { int64 id = 1; string slug = 2; }
+message ResolveSiteByDomainRequest { string domain = 1; string network_id = 2; }
+message RotateSiteApiKeyRequest { int64 site_id = 1; }
+message RotateSiteApiKeyResponse { ApiKey key = 1; string raw_key = 2; }
+message CreateSubsiteRequest { Subsite subsite = 1; }
+message UpdateSubsiteRequest { Subsite subsite = 1; }
+message DeleteSubsiteRequest { int64 id = 1; }
+message ListSubsitesRequest { int64 site_id = 1; bool include_archived = 2; bool public_only = 3; }
+message ListSubsitesResponse { repeated Subsite subsites = 1; }
+message GetSubsiteBySlugRequest { int64 site_id = 1; string site_slug = 2; string slug = 3; }
+message CreateSiteContentBlockRequest { SiteContentBlock block = 1; }
+message UpdateSiteContentBlockRequest { SiteContentBlock block = 1; }
+message DeleteSiteContentBlockRequest { int64 id = 1; }
+message ListSiteContentBlocksRequest { int64 site_id = 1; int64 subsite_id = 2; bool include_drafts = 3; }
+message ListSiteContentBlocksResponse { repeated SiteContentBlock blocks = 1; }
+message ListSiteContentBlockVersionsRequest { int64 block_id = 1; }
+message ListSiteContentBlockVersionsResponse { repeated SiteContentBlockVersion versions = 1; }
+message RollbackSiteContentBlockRequest { int64 block_id = 1; int32 version_number = 2; string actor_uuid = 3; }
+message CreateSiteNavItemRequest { SiteNavItem item = 1; }
+message UpdateSiteNavItemRequest { SiteNavItem item = 1; }
+message DeleteSiteNavItemRequest { int64 id = 1; }
+message ListSiteNavItemsRequest { int64 site_id = 1; bool visible_only = 2; }
+message ListSiteNavItemsResponse { repeated SiteNavItem items = 1; }
+message CreateWorldMapRequest { WorldMap map = 1; }
+message UpdateWorldMapRequest { WorldMap map = 1; }
+message DeleteWorldMapRequest { int64 id = 1; }
+message ListWorldMapsRequest { string network_id = 1; string server_name = 2; bool public_only = 3; int64 site_id = 4; int64 subsite_id = 5; }
+message ListWorldMapsResponse { repeated WorldMap maps = 1; }
+message GetWorldMapRequest { int64 id = 1; }
+message CreateSiteAssetRequest { SiteAsset asset = 1; }
+message UpdateSiteAssetRequest { SiteAsset asset = 1; }
+message DeleteSiteAssetRequest { int64 id = 1; }
+message ListSiteAssetsRequest { int64 site_id = 1; int64 subsite_id = 2; string asset_type = 3; }
+message ListSiteAssetsResponse { repeated SiteAsset assets = 1; }
+message GetSiteRenderSnapshotRequest { int64 site_id = 1; string slug = 2; string domain = 3; bool preview = 4; }
+message GetSubsiteRenderSnapshotRequest { int64 site_id = 1; string site_slug = 2; string slug = 3; bool preview = 4; }
 message ListLeaderboardConfigsRequest { string network_id = 1; }
 message ListLeaderboardConfigsResponse { repeated LeaderboardConfig configs = 1; }
 message CreateLeaderboardConfigRequest { LeaderboardConfig config = 1; }
@@ -2086,6 +2160,8 @@ message ListModpacksRequest {
     bool featured_only = 2;
     int32 page_size = 3;
     string page_token = 4;
+    int64 site_id = 5;
+    int64 subsite_id = 6;
 }
 message ListModpacksResponse {
     repeated Modpack modpacks = 1;
@@ -2101,6 +2177,8 @@ message DeleteHomepageWidgetRequest { int64 id = 1; }
 message ListHomepageWidgetsRequest {
     bool include_disabled = 1;
     bool public_only = 2;             // public homepage callers set true
+    int64 site_id = 3;
+    int64 subsite_id = 4;
 }
 message ListHomepageWidgetsResponse { repeated HomepageWidget widgets = 1; }
 message ReorderHomepageWidgetsRequest { repeated int64 ordered_ids = 1; }
