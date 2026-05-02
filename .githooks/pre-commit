@@ -1,0 +1,72 @@
+#!/usr/bin/env bash
+# Secret-leak pre-commit hook.
+# Bypass with: git commit --no-verify  (use sparingly, and only when you have reviewed the diff yourself)
+
+set -u
+
+red()  { printf '\033[31m%s\033[0m\n' "$*" 1>&2; }
+yellow() { printf '\033[33m%s\033[0m\n' "$*" 1>&2; }
+
+fail=0
+
+# 1) Block forbidden filenames outright.
+forbidden_regex='(^|/)(\.env|\.env\.local|\.env\.production|credentials\.json|serviceAccount[^/]*\.json)$|\.(pem|key)$'
+
+# Use -z + null-delimited for safety with weird filenames.
+while IFS= read -r -d '' file; do
+    [ -z "$file" ] && continue
+    # Allow .env.example explicitly.
+    case "$file" in
+        *.env.example|*/.env.example) continue ;;
+    esac
+    if printf '%s' "$file" | grep -E -q "$forbidden_regex"; then
+        red   "BLOCKED: forbidden file staged for commit:"
+        red   "  $file"
+        yellow "  (filename matches secret-file pattern; remove from index with: git rm --cached -- '$file')"
+        fail=1
+    fi
+done < <(git diff --cached --name-only -z --diff-filter=ACM)
+
+# 2) Scan staged content for secret patterns.
+# Patterns: name|regex
+patterns=(
+    'NexusControl API key|nsk_[A-Za-z0-9]{20,}'
+    'AWS Access Key ID|AKIA[0-9A-Z]{16}'
+    'GitHub Personal Access Token|ghp_[A-Za-z0-9]{36}'
+    'Slack token|xox[baprs]-[A-Za-z0-9-]{10,}'
+    'PEM private key header|-----BEGIN .*PRIVATE KEY-----'
+    'Generic credential assignment|(api[_-]?key|secret|password|token)[[:space:]]*[:=][[:space:]]*["'"'"']?[A-Za-z0-9+/=_-]{20,}'
+)
+
+# Iterate per-file so we can report which file matched.
+while IFS= read -r -d '' file; do
+    [ -z "$file" ] && continue
+    # Skip binary files (git diff --cached prints "Binary files ... differ").
+    diff_output=$(git diff --cached --no-color -- "$file" 2>/dev/null) || continue
+    [ -z "$diff_output" ] && continue
+    # Only scan added lines (start with '+', not '+++').
+    added=$(printf '%s\n' "$diff_output" | grep -E '^\+' | grep -Ev '^\+\+\+')
+    [ -z "$added" ] && continue
+
+    for entry in "${patterns[@]}"; do
+        name="${entry%%|*}"
+        regex="${entry#*|}"
+        # -i for case-insensitive on the generic pattern; harmless on the others.
+        if printf '%s\n' "$added" | grep -E -i -q -e "$regex"; then
+            red   "BLOCKED: possible secret in $file"
+            red   "  pattern: $name"
+            match=$(printf '%s\n' "$added" | grep -E -i -m1 -e "$regex" | head -c 200)
+            yellow "  line: $match"
+            fail=1
+        fi
+    done
+done < <(git diff --cached --name-only -z --diff-filter=ACM)
+
+if [ "$fail" -ne 0 ]; then
+    red ""
+    red "Pre-commit secret scan failed. Review the matches above."
+    yellow "If you are SURE this is a false positive, you can bypass with: git commit --no-verify"
+    exit 1
+fi
+
+exit 0

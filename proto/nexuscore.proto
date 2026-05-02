@@ -332,6 +332,7 @@ service NexusService {
     rpc ListLeaderboardMetrics(ListLeaderboardMetricsRequest) returns (ListLeaderboardMetricsResponse);
 
     // --- Auth ---
+    // reserved: ValidateMicrosoftAuth, ValidateAuthCode (removed in commit e52689b — replaced by RegisterPlayerLogin/LoginPlayer)
     rpc AuthenticateStaff(AuthenticateStaffRequest) returns (AuthenticateStaffResponse);
     rpc RegisterPlayerLogin(RegisterPlayerLoginRequest) returns (RegisterPlayerLoginResponse);
     rpc LoginPlayer(LoginPlayerRequest) returns (LoginPlayerResponse);
@@ -1577,8 +1578,9 @@ message GetPageBySlugRequest { string slug = 1; }
 message CreateSiteRequest { Site site = 1; bool issue_api_key = 2; }
 message UpdateSiteRequest { Site site = 1; }
 message DeleteSiteRequest { int64 id = 1; }
-message ListSitesRequest { bool include_archived = 1; bool public_only = 2; string network_id = 3; }
-message ListSitesResponse { repeated Site sites = 1; }
+// Pagination. Server caps page_size at 200; default 50.
+message ListSitesRequest { bool include_archived = 1; bool public_only = 2; string network_id = 3; int32 page_size = 4; string page_token = 5; }
+message ListSitesResponse { repeated Site sites = 1; string next_page_token = 2; }
 message GetSiteRequest { int64 id = 1; string slug = 2; }
 message ResolveSiteByDomainRequest { string domain = 1; string network_id = 2; }
 message RotateSiteApiKeyRequest { int64 site_id = 1; }
@@ -1586,37 +1588,50 @@ message RotateSiteApiKeyResponse { ApiKey key = 1; string raw_key = 2; }
 message CreateSubsiteRequest { Subsite subsite = 1; }
 message UpdateSubsiteRequest { Subsite subsite = 1; }
 message DeleteSubsiteRequest { int64 id = 1; }
-message ListSubsitesRequest { int64 site_id = 1; bool include_archived = 2; bool public_only = 3; }
-message ListSubsitesResponse { repeated Subsite subsites = 1; }
+// Pagination. Server caps page_size at 200; default 50.
+message ListSubsitesRequest { int64 site_id = 1; bool include_archived = 2; bool public_only = 3; int32 page_size = 4; string page_token = 5; }
+message ListSubsitesResponse { repeated Subsite subsites = 1; string next_page_token = 2; }
 message GetSubsiteBySlugRequest { int64 site_id = 1; string site_slug = 2; string slug = 3; }
 message CreateSiteContentBlockRequest { SiteContentBlock block = 1; }
 message UpdateSiteContentBlockRequest { SiteContentBlock block = 1; }
 message DeleteSiteContentBlockRequest { int64 id = 1; }
-message ListSiteContentBlocksRequest { int64 site_id = 1; int64 subsite_id = 2; bool include_drafts = 3; }
-message ListSiteContentBlocksResponse { repeated SiteContentBlock blocks = 1; }
-message ListSiteContentBlockVersionsRequest { int64 block_id = 1; }
-message ListSiteContentBlockVersionsResponse { repeated SiteContentBlockVersion versions = 1; }
-message RollbackSiteContentBlockRequest { int64 block_id = 1; int32 version_number = 2; string actor_uuid = 3; }
+// Pagination. Server caps page_size at 200; default 50.
+message ListSiteContentBlocksRequest { int64 site_id = 1; int64 subsite_id = 2; bool include_drafts = 3; int32 page_size = 4; string page_token = 5; }
+message ListSiteContentBlocksResponse { repeated SiteContentBlock blocks = 1; string next_page_token = 2; }
+// Pagination. Server caps page_size at 200; default 50.
+message ListSiteContentBlockVersionsRequest { int64 block_id = 1; int32 page_size = 2; string page_token = 3; }
+message ListSiteContentBlockVersionsResponse { repeated SiteContentBlockVersion versions = 1; string next_page_token = 2; }
+// actor_uuid is DEPRECATED — see field comment.
+message RollbackSiteContentBlockRequest {
+    int64 block_id = 1;
+    int32 version_number = 2;
+    // DEPRECATED: ignored by server; actor is derived from auth context.
+    string actor_uuid = 3;
+}
 message CreateSiteNavItemRequest { SiteNavItem item = 1; }
 message UpdateSiteNavItemRequest { SiteNavItem item = 1; }
 message DeleteSiteNavItemRequest { int64 id = 1; }
-message ListSiteNavItemsRequest { int64 site_id = 1; bool visible_only = 2; }
-message ListSiteNavItemsResponse { repeated SiteNavItem items = 1; }
-message ListSiteTemplatesRequest { bool include_disabled = 1; }
-message ListSiteTemplatesResponse { repeated SiteTemplate templates = 1; }
+// Pagination. Server caps page_size at 200; default 50.
+message ListSiteNavItemsRequest { int64 site_id = 1; bool visible_only = 2; int32 page_size = 3; string page_token = 4; }
+message ListSiteNavItemsResponse { repeated SiteNavItem items = 1; string next_page_token = 2; }
+// Pagination. Server caps page_size at 200; default 50.
+message ListSiteTemplatesRequest { bool include_disabled = 1; int32 page_size = 2; string page_token = 3; }
+message ListSiteTemplatesResponse { repeated SiteTemplate templates = 1; string next_page_token = 2; }
 message UpsertSiteTemplateRequest { SiteTemplate template = 1; }
 message DeleteSiteTemplateRequest { int64 id = 1; string template_key = 2; }
 message CreateWorldMapRequest { WorldMap map = 1; }
 message UpdateWorldMapRequest { WorldMap map = 1; }
 message DeleteWorldMapRequest { int64 id = 1; }
-message ListWorldMapsRequest { string network_id = 1; string server_name = 2; bool public_only = 3; int64 site_id = 4; int64 subsite_id = 5; }
-message ListWorldMapsResponse { repeated WorldMap maps = 1; }
+// Pagination. Server caps page_size at 200; default 50.
+message ListWorldMapsRequest { string network_id = 1; string server_name = 2; bool public_only = 3; int64 site_id = 4; int64 subsite_id = 5; int32 page_size = 6; string page_token = 7; }
+message ListWorldMapsResponse { repeated WorldMap maps = 1; string next_page_token = 2; }
 message GetWorldMapRequest { int64 id = 1; }
 message CreateSiteAssetRequest { SiteAsset asset = 1; }
 message UpdateSiteAssetRequest { SiteAsset asset = 1; }
 message DeleteSiteAssetRequest { int64 id = 1; }
-message ListSiteAssetsRequest { int64 site_id = 1; int64 subsite_id = 2; string asset_type = 3; }
-message ListSiteAssetsResponse { repeated SiteAsset assets = 1; }
+// Pagination. Server caps page_size at 200; default 50.
+message ListSiteAssetsRequest { int64 site_id = 1; int64 subsite_id = 2; string asset_type = 3; int32 page_size = 4; string page_token = 5; }
+message ListSiteAssetsResponse { repeated SiteAsset assets = 1; string next_page_token = 2; }
 message GetSiteRenderSnapshotRequest { int64 site_id = 1; string slug = 2; string domain = 3; bool preview = 4; }
 message GetSubsiteRenderSnapshotRequest { int64 site_id = 1; string site_slug = 2; string slug = 3; bool preview = 4; }
 message ListLeaderboardConfigsRequest { string network_id = 1; }
@@ -1624,9 +1639,10 @@ message ListLeaderboardConfigsResponse { repeated LeaderboardConfig configs = 1;
 message CreateLeaderboardConfigRequest { LeaderboardConfig config = 1; }
 message UpdateLeaderboardConfigRequest { LeaderboardConfig config = 1; }
 message DeleteLeaderboardConfigRequest { int64 id = 1; }
-message ListLeaderboardMetricsRequest {}
+// Pagination. Server caps page_size at 200; default 50.
+message ListLeaderboardMetricsRequest { int32 page_size = 1; string page_token = 2; }
 message LeaderboardMetric { string metric = 1; string display_name = 2; string description = 3; string unit = 4; }
-message ListLeaderboardMetricsResponse { repeated LeaderboardMetric metrics = 1; }
+message ListLeaderboardMetricsResponse { repeated LeaderboardMetric metrics = 1; string next_page_token = 2; }
 
 // --- Auth ---
 message AuthenticateStaffRequest { string username = 1; string password = 2; }
