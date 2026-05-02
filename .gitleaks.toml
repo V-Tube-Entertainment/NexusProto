@@ -1,0 +1,21 @@
+[extend]
+useDefault = true
+
+[[rules]]
+id = "nexuscontrol-api-key"
+description = "NexusControl API key"
+regex = '''nsk_[A-Za-z0-9]{20,}'''
+keywords = ["nsk_"]
+tags = ["key", "nexuscontrol"]
+
+[allowlist]
+description = "Allowlist for known-safe references in docs/tests"
+paths = [
+  '''.githooks/pre-commit''',
+  '''CONTRIBUTING\.md''',
+  '''README\.md''',
+]
+# Allow obviously-fake test tokens used in test fixtures
+regexes = [
+  '''nsk_(test|fake|example|XXXXXXXXXXXXXXXXXXXX)''',
+]
