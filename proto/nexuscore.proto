@@ -296,19 +296,15 @@ service NexusService {
     rpc DeleteSubsite(DeleteSubsiteRequest) returns (Empty);
     rpc ListSubsites(ListSubsitesRequest) returns (ListSubsitesResponse);
     rpc GetSubsiteBySlug(GetSubsiteBySlugRequest) returns (Subsite);
-    rpc CreateSiteContentBlock(CreateSiteContentBlockRequest) returns (SiteContentBlock);
-    rpc UpdateSiteContentBlock(UpdateSiteContentBlockRequest) returns (SiteContentBlock);
-    rpc DeleteSiteContentBlock(DeleteSiteContentBlockRequest) returns (Empty);
-    rpc ListSiteContentBlocks(ListSiteContentBlocksRequest) returns (ListSiteContentBlocksResponse);
-    rpc ListSiteContentBlockVersions(ListSiteContentBlockVersionsRequest) returns (ListSiteContentBlockVersionsResponse);
-    rpc RollbackSiteContentBlock(RollbackSiteContentBlockRequest) returns (SiteContentBlock);
+    rpc GetSiteDocument(GetSiteDocumentRequest) returns (SiteDocument);
+    rpc UpdateSiteDocumentDraft(UpdateSiteDocumentDraftRequest) returns (SiteDocument);
+    rpc PublishSiteDocument(PublishSiteDocumentRequest) returns (SiteDocument);
+    rpc ListSiteDocumentVersions(ListSiteDocumentVersionsRequest) returns (ListSiteDocumentVersionsResponse);
+    rpc RestoreSiteDocumentVersion(RestoreSiteDocumentVersionRequest) returns (SiteDocument);
     rpc CreateSiteNavItem(CreateSiteNavItemRequest) returns (SiteNavItem);
     rpc UpdateSiteNavItem(UpdateSiteNavItemRequest) returns (SiteNavItem);
     rpc DeleteSiteNavItem(DeleteSiteNavItemRequest) returns (Empty);
     rpc ListSiteNavItems(ListSiteNavItemsRequest) returns (ListSiteNavItemsResponse);
-    rpc ListSiteTemplates(ListSiteTemplatesRequest) returns (ListSiteTemplatesResponse);
-    rpc UpsertSiteTemplate(UpsertSiteTemplateRequest) returns (SiteTemplate);
-    rpc DeleteSiteTemplate(DeleteSiteTemplateRequest) returns (Empty);
     rpc CreateWorldMap(CreateWorldMapRequest) returns (WorldMap);
     rpc UpdateWorldMap(UpdateWorldMapRequest) returns (WorldMap);
     rpc DeleteWorldMap(DeleteWorldMapRequest) returns (Empty);
@@ -1581,33 +1577,22 @@ message DeleteSubsiteRequest { int64 id = 1; }
 message ListSubsitesRequest { int64 site_id = 1; bool include_archived = 2; bool public_only = 3; int32 page_size = 4; string page_token = 5; }
 message ListSubsitesResponse { repeated Subsite subsites = 1; string next_page_token = 2; }
 message GetSubsiteBySlugRequest { int64 site_id = 1; string site_slug = 2; string slug = 3; }
-message CreateSiteContentBlockRequest { SiteContentBlock block = 1; }
-message UpdateSiteContentBlockRequest { SiteContentBlock block = 1; }
-message DeleteSiteContentBlockRequest { int64 id = 1; }
+// status: "DRAFT" returns the editor's working copy, "PUBLISHED" returns the public copy.
+// Empty/unknown defaults to DRAFT.
+message GetSiteDocumentRequest { int64 site_id = 1; int64 subsite_id = 2; string status = 3; }
+message UpdateSiteDocumentDraftRequest { int64 site_id = 1; int64 subsite_id = 2; string draft_json = 3; }
+message PublishSiteDocumentRequest { int64 site_id = 1; int64 subsite_id = 2; }
 // Pagination. Server caps page_size at 200; default 50.
-message ListSiteContentBlocksRequest { int64 site_id = 1; int64 subsite_id = 2; bool include_drafts = 3; int32 page_size = 4; string page_token = 5; }
-message ListSiteContentBlocksResponse { repeated SiteContentBlock blocks = 1; string next_page_token = 2; }
-// Pagination. Server caps page_size at 200; default 50.
-message ListSiteContentBlockVersionsRequest { int64 block_id = 1; int32 page_size = 2; string page_token = 3; }
-message ListSiteContentBlockVersionsResponse { repeated SiteContentBlockVersion versions = 1; string next_page_token = 2; }
-// actor_uuid is DEPRECATED — see field comment.
-message RollbackSiteContentBlockRequest {
-    int64 block_id = 1;
-    int32 version_number = 2;
-    // DEPRECATED: ignored by server; actor is derived from auth context.
-    string actor_uuid = 3;
-}
+message ListSiteDocumentVersionsRequest { int64 site_id = 1; int64 subsite_id = 2; int32 page_size = 3; string page_token = 4; }
+message ListSiteDocumentVersionsResponse { repeated SiteDocumentVersion versions = 1; string next_page_token = 2; }
+// Restoring a version copies that version's document_json back into draft_json (does NOT auto-publish).
+message RestoreSiteDocumentVersionRequest { int64 site_id = 1; int64 subsite_id = 2; int32 version_number = 3; }
 message CreateSiteNavItemRequest { SiteNavItem item = 1; }
 message UpdateSiteNavItemRequest { SiteNavItem item = 1; }
 message DeleteSiteNavItemRequest { int64 id = 1; }
 // Pagination. Server caps page_size at 200; default 50.
 message ListSiteNavItemsRequest { int64 site_id = 1; bool visible_only = 2; int32 page_size = 3; string page_token = 4; }
 message ListSiteNavItemsResponse { repeated SiteNavItem items = 1; string next_page_token = 2; }
-// Pagination. Server caps page_size at 200; default 50.
-message ListSiteTemplatesRequest { bool include_disabled = 1; int32 page_size = 2; string page_token = 3; }
-message ListSiteTemplatesResponse { repeated SiteTemplate templates = 1; string next_page_token = 2; }
-message UpsertSiteTemplateRequest { SiteTemplate template = 1; }
-message DeleteSiteTemplateRequest { int64 id = 1; string template_key = 2; }
 message CreateWorldMapRequest { WorldMap map = 1; }
 message UpdateWorldMapRequest { WorldMap map = 1; }
 message DeleteWorldMapRequest { int64 id = 1; }

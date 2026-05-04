@@ -1180,10 +1180,9 @@ message Site {
     string status = 11;
     string access_mode = 12;
     string access_config_json = 13;
-    string template_key = 14;
+    reserved 14, 17; // dropped: template_key, navigation_json
     int64 api_key_id = 15;
     string theme_config_json = 16;
-    string navigation_json = 17;
     string settings_json = 18;
     string meta_title = 19;
     string meta_description = 20;
@@ -1222,33 +1221,30 @@ message Subsite {
     google.protobuf.Timestamp updated_at = 22;
 }
 
-message SiteContentBlock {
+// Per (site, subsite) document holding the block tree as serialized JSON.
+// `draft_json` is what the editor reads/writes; `published_json` is what the public site renders.
+// On Publish, draft_json is copied into published_json and a new SiteDocumentVersion row is recorded.
+message SiteDocument {
     int64 id = 1;
     int64 site_id = 2;
     int64 subsite_id = 3;
-    string block_type = 4;
-    string title = 5;
-    bool enabled = 6;
-    string status = 7;
-    int32 sort_order = 8;
-    string config_json = 9;
-    string created_by_uuid = 10;
-    string updated_by_uuid = 11;
-    google.protobuf.Timestamp created_at = 12;
-    google.protobuf.Timestamp updated_at = 13;
+    string draft_json = 4;
+    string published_json = 5;
+    int32 current_version = 6;
+    google.protobuf.Timestamp last_published_at = 7;
+    string last_published_by_uuid = 8;
+    string updated_by_uuid = 9;
+    google.protobuf.Timestamp created_at = 10;
+    google.protobuf.Timestamp updated_at = 11;
 }
 
-message SiteContentBlockVersion {
+message SiteDocumentVersion {
     int64 id = 1;
-    int64 block_id = 2;
+    int64 document_id = 2;
     int32 version_number = 3;
-    string title = 4;
-    bool enabled = 5;
-    string status = 6;
-    int32 sort_order = 7;
-    string config_json = 8;
-    string created_by_uuid = 9;
-    google.protobuf.Timestamp created_at = 10;
+    string document_json = 4;
+    string published_by_uuid = 5;
+    google.protobuf.Timestamp published_at = 6;
 }
 
 message SiteNavItem {
@@ -1262,21 +1258,6 @@ message SiteNavItem {
     int32 sort_order = 8;
     string required_permission = 9;
     string access_mode = 10;
-    google.protobuf.Timestamp created_at = 11;
-    google.protobuf.Timestamp updated_at = 12;
-}
-
-message SiteTemplate {
-    int64 id = 1;
-    string template_key = 2;
-    string name = 3;
-    string description = 4;
-    bool enabled = 5;
-    string nav_json = 6;
-    string blocks_json = 7;
-    string settings_json = 8;
-    string created_by_uuid = 9;
-    string updated_by_uuid = 10;
     google.protobuf.Timestamp created_at = 11;
     google.protobuf.Timestamp updated_at = 12;
 }
@@ -1337,10 +1318,12 @@ message SiteRenderSnapshot {
     Site site = 1;
     repeated SiteNavItem navigation = 2;
     repeated SiteAsset assets = 3;
-    repeated SiteContentBlock content_blocks = 4;
+    reserved 4; // dropped: repeated SiteContentBlock content_blocks
     repeated WorldMap world_maps = 5;
     string cache_version = 6;
     google.protobuf.Timestamp generated_at = 7;
+    // Published block-tree document (JSON). Empty when the site has never been published.
+    string document_json = 8;
 }
 
 message SubsiteRenderSnapshot {
@@ -1348,10 +1331,11 @@ message SubsiteRenderSnapshot {
     Subsite subsite = 2;
     repeated SiteNavItem navigation = 3;
     repeated SiteAsset assets = 4;
-    repeated SiteContentBlock content_blocks = 5;
+    reserved 5; // dropped: repeated SiteContentBlock content_blocks
     repeated WorldMap world_maps = 6;
     string cache_version = 7;
     google.protobuf.Timestamp generated_at = 8;
+    string document_json = 9;
 }
 
 // ============================================================
