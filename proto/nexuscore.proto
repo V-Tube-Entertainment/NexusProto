@@ -284,11 +284,6 @@ service NexusService {
     rpc GetRetentionPolicies(GetRetentionPoliciesRequest) returns (ListRetentionPoliciesResponse);
     rpc UpdateRetentionPolicy(UpdateRetentionPolicyRequest) returns (DataRetentionPolicy);
     rpc RunRetentionNow(RunRetentionNowRequest) returns (Empty);
-    rpc CreatePage(CreatePageRequest) returns (StaticPage);
-    rpc UpdatePage(UpdatePageRequest) returns (StaticPage);
-    rpc DeletePage(DeletePageRequest) returns (Empty);
-    rpc ListPages(ListPagesRequest) returns (ListPagesResponse);
-    rpc GetPageBySlug(GetPageBySlugRequest) returns (StaticPage);
     rpc CreateSite(CreateSiteRequest) returns (Site);
     rpc UpdateSite(UpdateSiteRequest) returns (Site);
     rpc DeleteSite(DeleteSiteRequest) returns (Empty);
@@ -1569,12 +1564,6 @@ message GetRetentionPoliciesRequest {}
 message ListRetentionPoliciesResponse { repeated DataRetentionPolicy policies = 1; }
 message UpdateRetentionPolicyRequest { DataRetentionPolicy policy = 1; }
 message RunRetentionNowRequest {}
-message CreatePageRequest { string slug = 1; string title = 2; string content = 3; bool published = 4; }
-message UpdatePageRequest { int32 id = 1; string title = 2; string content = 3; bool published = 4; }
-message DeletePageRequest { int32 id = 1; }
-message ListPagesRequest { bool published_only = 1; int32 page_size = 2; string page_token = 3; }
-message ListPagesResponse { repeated StaticPage pages = 1; string next_page_token = 2; }
-message GetPageBySlugRequest { string slug = 1; }
 message CreateSiteRequest { Site site = 1; bool issue_api_key = 2; }
 message UpdateSiteRequest { Site site = 1; }
 message DeleteSiteRequest { int64 id = 1; }

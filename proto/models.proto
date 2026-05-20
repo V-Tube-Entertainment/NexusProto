@@ -994,17 +994,8 @@ message RegisteredPlugin {
 }
 
 // ============================================================
-// Static Content
+// Staff Team Display
 // ============================================================
-
-message StaticPage {
-    int32 id = 1;
-    string slug = 2;
-    string title = 3;
-    string content = 4;
-    bool published = 5;
-    google.protobuf.Timestamp created_at = 6;
-}
 
 message StaffTeamDisplayEntry {
     int32 id = 1;
