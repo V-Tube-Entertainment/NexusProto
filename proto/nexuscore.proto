@@ -316,6 +316,21 @@ service NexusService {
     rpc ListSiteAssets(ListSiteAssetsRequest) returns (ListSiteAssetsResponse);
     rpc GetSiteRenderSnapshot(GetSiteRenderSnapshotRequest) returns (SiteRenderSnapshot);
     rpc GetSubsiteRenderSnapshot(GetSubsiteRenderSnapshotRequest) returns (SubsiteRenderSnapshot);
+    rpc ListSiteDocumentSnippets(ListSiteDocumentSnippetsRequest) returns (ListSiteDocumentSnippetsResponse);
+    rpc UpsertSiteDocumentSnippet(UpsertSiteDocumentSnippetRequest) returns (SiteDocumentSnippet);
+    rpc DeleteSiteDocumentSnippet(DeleteSiteDocumentSnippetRequest) returns (Empty);
+    rpc ApplySiteDocumentSnippet(ApplySiteDocumentSnippetRequest) returns (SiteDocument);
+    rpc ScheduleSiteDocumentPublish(ScheduleSiteDocumentPublishRequest) returns (SiteDocument);
+    rpc CancelScheduledSiteDocumentPublish(CancelScheduledSiteDocumentPublishRequest) returns (SiteDocument);
+    rpc ListSiteDocumentAutosaves(ListSiteDocumentAutosavesRequest) returns (ListSiteDocumentAutosavesResponse);
+    rpc RestoreSiteDocumentAutosave(RestoreSiteDocumentAutosaveRequest) returns (SiteDocument);
+    rpc ClaimSiteDocumentEditLock(ClaimSiteDocumentEditLockRequest) returns (SiteDocumentEditLock);
+    rpc ReleaseSiteDocumentEditLock(ReleaseSiteDocumentEditLockRequest) returns (Empty);
+    rpc GetSiteDocumentEditLock(GetSiteDocumentEditLockRequest) returns (SiteDocumentEditLock);
+    // Streaming upload. First chunk MUST carry a UploadSiteAssetHeader; subsequent
+    // chunks carry raw bytes. Server replies with the created SiteAsset row when
+    // the stream closes successfully. Caller must have sites.manage.
+    rpc UploadSiteAsset(stream UploadSiteAssetChunk) returns (SiteAsset);
     rpc ListLeaderboardConfigs(ListLeaderboardConfigsRequest) returns (ListLeaderboardConfigsResponse);
     rpc CreateLeaderboardConfig(CreateLeaderboardConfigRequest) returns (LeaderboardConfig);
     rpc UpdateLeaderboardConfig(UpdateLeaderboardConfigRequest) returns (LeaderboardConfig);
@@ -1580,7 +1595,9 @@ message GetSubsiteBySlugRequest { int64 site_id = 1; string site_slug = 2; strin
 // status: "DRAFT" returns the editor's working copy, "PUBLISHED" returns the public copy.
 // Empty/unknown defaults to DRAFT.
 message GetSiteDocumentRequest { int64 site_id = 1; int64 subsite_id = 2; string status = 3; }
-message UpdateSiteDocumentDraftRequest { int64 site_id = 1; int64 subsite_id = 2; string draft_json = 3; }
+// force_unlock: when true the caller takes the document's edit lock from the
+// existing holder. Audited as `site_document:lock_force_override`.
+message UpdateSiteDocumentDraftRequest { int64 site_id = 1; int64 subsite_id = 2; string draft_json = 3; bool force_unlock = 4; }
 message PublishSiteDocumentRequest { int64 site_id = 1; int64 subsite_id = 2; }
 // Pagination. Server caps page_size at 200; default 50.
 message ListSiteDocumentVersionsRequest { int64 site_id = 1; int64 subsite_id = 2; int32 page_size = 3; string page_token = 4; }
@@ -2179,3 +2196,102 @@ message ListHomepageWidgetsRequest {
 }
 message ListHomepageWidgetsResponse { repeated HomepageWidget widgets = 1; }
 message ReorderHomepageWidgetsRequest { repeated int64 ordered_ids = 1; }
+
+// --- Site Document Snippets ---
+// Snippets are reusable block-tree fragments. Apply inserts a snippet's blocks
+// into a (site, subsite) draft document at the given position. Server appends
+// at end when after_block_id is empty; otherwise inserts immediately after the
+// block whose `id` matches in the draft's top-level block array.
+message ListSiteDocumentSnippetsRequest {
+    string category = 1; // optional filter
+    int32 page_size = 2;
+    string page_token = 3;
+}
+message ListSiteDocumentSnippetsResponse {
+    repeated SiteDocumentSnippet snippets = 1;
+    string next_page_token = 2;
+    int32 total_count = 3;
+}
+message UpsertSiteDocumentSnippetRequest { SiteDocumentSnippet snippet = 1; }
+message DeleteSiteDocumentSnippetRequest {
+    int64 id = 1;          // either id or snippet_key
+    string snippet_key = 2;
+}
+message ApplySiteDocumentSnippetRequest {
+    int64 site_id = 1;
+    int64 subsite_id = 2;
+    int64 snippet_id = 3;          // either snippet_id or snippet_key
+    string snippet_key = 4;
+    string after_block_id = 5;     // empty => append to end of top-level blocks
+}
+
+// --- Site Document Workflow ---
+// Schedule publishes a future date for the current draft to be published. The
+// scheduler service runs a 60-second tick that finds due documents and calls
+// PublishSiteDocument with the saved actor uuid. Setting an earlier time
+// overwrites the existing schedule.
+message ScheduleSiteDocumentPublishRequest {
+    int64 site_id = 1;
+    int64 subsite_id = 2;
+    google.protobuf.Timestamp publish_at = 3;
+}
+message CancelScheduledSiteDocumentPublishRequest {
+    int64 site_id = 1;
+    int64 subsite_id = 2;
+}
+
+// Autosaves are written by UpdateSiteDocumentDraft when the draft body changes.
+// History is kept to the last 20 entries per document.
+message ListSiteDocumentAutosavesRequest {
+    int64 site_id = 1;
+    int64 subsite_id = 2;
+    int32 page_size = 3;
+    string page_token = 4;
+}
+message ListSiteDocumentAutosavesResponse {
+    repeated SiteDocumentAutosave autosaves = 1;
+    string next_page_token = 2;
+    int32 total_count = 3;
+}
+// Restoring an autosave copies its draft_json back to the document's draft.
+// Does NOT publish.
+message RestoreSiteDocumentAutosaveRequest {
+    int64 site_id = 1;
+    int64 subsite_id = 2;
+    int64 autosave_id = 3;
+}
+
+// Edit locks are soft 5-minute locks. Refreshed on every successful Upsert by
+// the holder. Other writers see FailedPrecondition unless they force_unlock.
+message ClaimSiteDocumentEditLockRequest {
+    int64 site_id = 1;
+    int64 subsite_id = 2;
+    string holder_name = 3;     // display name shown to other editors
+}
+message ReleaseSiteDocumentEditLockRequest {
+    int64 site_id = 1;
+    int64 subsite_id = 2;
+}
+message GetSiteDocumentEditLockRequest {
+    int64 site_id = 1;
+    int64 subsite_id = 2;
+}
+
+// --- Site Asset Uploads ---
+message UploadSiteAssetHeader {
+    int64 site_id = 1;
+    int64 subsite_id = 2;
+    string name = 3;             // human label; not the filename on disk
+    string mime_type = 4;        // e.g. image/png; pass-through to Content-Type
+    string role = 5;             // BACKGROUND | HERO | GENERAL | ...
+    string alt_text = 6;
+    int32 width = 7;             // optional; server records what the client knows
+    int32 height = 8;
+    string filename = 9;         // original filename, used to pick the storage suffix
+}
+message UploadSiteAssetChunk {
+    oneof payload {
+        UploadSiteAssetHeader header = 1;
+        bytes data = 2;
+    }
+}

@@ -1,4 +1,14 @@
-# Site Template API
+# Site Template API (superseded)
+
+> **Status: superseded.** The `SiteTemplate` table was dropped in
+> migration `042_site_documents` when the site builder moved to block-tree
+> documents. Reusable layout fragments now live in **snippets**
+> (`SiteDocumentSnippet`, migration `048_site_document_snippets`). See
+> `site-builder-blocks.md` for the block schema and snippet contract, and
+> `docs/sites-and-templates-backend.md` for the RPC list.
+
+The historical SiteTemplate proto messages below are kept for reference for
+clients that may still hold cached generated stubs; the RPCs are not served.
 
 This document summarizes the protobuf additions for persisted site templates and site-builder support.
 

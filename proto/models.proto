@@ -1236,6 +1236,33 @@ message SiteDocument {
     string updated_by_uuid = 9;
     google.protobuf.Timestamp created_at = 10;
     google.protobuf.Timestamp updated_at = 11;
+    // Scheduled-publish queue: when scheduled_publish_at is set, the scheduler
+    // service will copy draft_json into published_json at that time using
+    // scheduled_publish_by_uuid as the publishing actor.
+    google.protobuf.Timestamp scheduled_publish_at = 12;
+    string scheduled_publish_by_uuid = 13;
+}
+
+// SiteDocumentAutosave is an in-editor undo checkpoint. Written automatically by
+// UpdateSiteDocumentDraft whenever the draft body actually changes. The server
+// prunes per-document history to the most recent 20 entries.
+message SiteDocumentAutosave {
+    int64 id = 1;
+    int64 document_id = 2;
+    string draft_json = 3;
+    string created_by_uuid = 4;
+    google.protobuf.Timestamp created_at = 5;
+}
+
+// SiteDocumentEditLock is a soft lock (TTL 5 minutes) that prevents two editors
+// from clobbering each other. UpdateSiteDocumentDraft rejects writes from
+// callers other than the holder unless force_unlock is set on the request.
+message SiteDocumentEditLock {
+    int64 document_id = 1;
+    string holder_uuid = 2;
+    string holder_name = 3;
+    google.protobuf.Timestamp claimed_at = 4;
+    google.protobuf.Timestamp expires_at = 5;
 }
 
 message SiteDocumentVersion {
@@ -1306,12 +1333,27 @@ message SiteAsset {
     int64 subsite_id = 3;
     string asset_type = 4;
     string name = 5;
+    // Public URL. For server-stored assets this is /api/v1/site-assets/{id};
+    // for external assets (CDN, Nextcloud share, etc.) the caller sets it directly.
     string url = 6;
     string mime_type = 7;
     int64 size_bytes = 8;
     string metadata_json = 9;
     string created_by_uuid = 10;
     google.protobuf.Timestamp created_at = 11;
+    int32 width = 12;
+    int32 height = 13;
+    string alt_text = 14;
+    // Focal point as 0..1 fractions. Used by the renderer to crop into fixed
+    // aspect ratios without cutting off the subject.
+    double focal_x = 15;
+    double focal_y = 16;
+    // GENERAL | BACKGROUND | HERO | FAVICON | OG (free-form on the server side).
+    string role = 17;
+    // Filesystem-relative path written by internal/storage. Empty for
+    // externally-hosted assets.
+    string storage_path = 18;
+    string checksum_sha256 = 19;
 }
 
 message SiteRenderSnapshot {
@@ -1336,6 +1378,24 @@ message SubsiteRenderSnapshot {
     string cache_version = 7;
     google.protobuf.Timestamp generated_at = 8;
     string document_json = 9;
+}
+
+// Reusable block-tree fragment that staff can stamp into a site/subsite draft.
+// blocks_json holds a JSON array of blocks matching the editor schema documented
+// in nexus-proto/docs/site-builder-blocks.md. category is a free-form tag used
+// by the editor to group snippets in its picker (LAYOUT, HERO, CARDS, FOOTER, ...).
+message SiteDocumentSnippet {
+    int64 id = 1;
+    string snippet_key = 2;
+    string name = 3;
+    string description = 4;
+    string category = 5;
+    string blocks_json = 6;
+    string preview_image_url = 7;
+    string created_by_uuid = 8;
+    string updated_by_uuid = 9;
+    google.protobuf.Timestamp created_at = 10;
+    google.protobuf.Timestamp updated_at = 11;
 }
 
 // ============================================================
