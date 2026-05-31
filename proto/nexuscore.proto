@@ -314,6 +314,14 @@ service NexusService {
     rpc UpdateSiteAsset(UpdateSiteAssetRequest) returns (SiteAsset);
     rpc DeleteSiteAsset(DeleteSiteAssetRequest) returns (Empty);
     rpc ListSiteAssets(ListSiteAssetsRequest) returns (ListSiteAssetsResponse);
+    rpc SetSiteAssetShared(SetSiteAssetSharedRequest) returns (SiteAsset);
+    // Site domain aliases — additional hosts beyond primary_domain.
+    rpc ListSiteDomainAliases(ListSiteDomainAliasesRequest) returns (ListSiteDomainAliasesResponse);
+    rpc CreateSiteDomainAlias(CreateSiteDomainAliasRequest) returns (SiteDomainAlias);
+    rpc DeleteSiteDomainAlias(DeleteSiteDomainAliasRequest) returns (Empty);
+    // DNS verification: issue a per-site TXT challenge + check it landed.
+    rpc IssueDomainVerifyChallenge(IssueDomainVerifyChallengeRequest) returns (Site);
+    rpc CheckDomainVerification(CheckDomainVerificationRequest) returns (Site);
     rpc GetSiteRenderSnapshot(GetSiteRenderSnapshotRequest) returns (SiteRenderSnapshot);
     rpc GetSubsiteRenderSnapshot(GetSubsiteRenderSnapshotRequest) returns (SubsiteRenderSnapshot);
     rpc ListSiteDocumentSnippets(ListSiteDocumentSnippetsRequest) returns (ListSiteDocumentSnippetsResponse);
@@ -327,6 +335,76 @@ service NexusService {
     rpc ClaimSiteDocumentEditLock(ClaimSiteDocumentEditLockRequest) returns (SiteDocumentEditLock);
     rpc ReleaseSiteDocumentEditLock(ReleaseSiteDocumentEditLockRequest) returns (Empty);
     rpc GetSiteDocumentEditLock(GetSiteDocumentEditLockRequest) returns (SiteDocumentEditLock);
+    // Per-page SEO metadata. Side-channel update that bypasses the draft edit
+    // lock — SEO edits are non-conflicting with body edits and shouldn't
+    // contend with another author's open editor.
+    rpc UpdateSiteDocumentSEO(UpdateSiteDocumentSEORequest) returns (SiteDocument);
+    // Pageview analytics. RecordSitePageview is the PUBLIC beacon write path;
+    // GetSitePageviewStats is the admin dashboard read.
+    rpc RecordSitePageview(RecordSitePageviewRequest) returns (Empty);
+    rpc GetSitePageviewStats(GetSitePageviewStatsRequest) returns (GetSitePageviewStatsResponse);
+    // Site vote events (Votifier-style). Mirrors donation events: Record is
+    // admin-gated; GetTotals is PUBLIC so the vote goal block renders the
+    // progress bar without auth.
+    rpc RecordSiteVoteEvent(RecordSiteVoteEventRequest) returns (SiteVoteEvent);
+    rpc ListSiteVoteEvents(ListSiteVoteEventsRequest) returns (ListSiteVoteEventsResponse);
+    rpc GetSiteVoteTotals(GetSiteVoteTotalsRequest) returns (GetSiteVoteTotalsResponse);
+    rpc DeleteSiteVoteEvent(DeleteSiteVoteEventRequest) returns (Empty);
+    // Site donation events. Record is admin-gated (the Next.js webhook
+    // proxies through with a staff API key after Tebex signature check).
+    // GetSiteDonationTotals is PUBLIC — visitors see the goal progress.
+    rpc RecordSiteDonationEvent(RecordSiteDonationEventRequest) returns (SiteDonationEvent);
+    rpc ListSiteDonationEvents(ListSiteDonationEventsRequest) returns (ListSiteDonationEventsResponse);
+    rpc GetSiteDonationTotals(GetSiteDonationTotalsRequest) returns (GetSiteDonationTotalsResponse);
+    rpc DeleteSiteDonationEvent(DeleteSiteDonationEventRequest) returns (Empty);
+    // Comments-block discussion. CreateSiteComment + ListSiteComments are
+    // PUBLIC; SetSiteCommentStatus and ListAllSiteComments are admin.
+    rpc CreateSiteComment(CreateSiteCommentRequest) returns (SiteComment);
+    rpc ListSiteComments(ListSiteCommentsRequest) returns (ListSiteCommentsResponse);
+    rpc ListAllSiteComments(ListAllSiteCommentsRequest) returns (ListSiteCommentsResponse);
+    rpc SetSiteCommentStatus(SetSiteCommentStatusRequest) returns (SiteComment);
+    rpc DeleteSiteComment(DeleteSiteCommentRequest) returns (Empty);
+    // Poll-block votes. Both write + results read are PUBLIC — visitors cast
+    // votes without auth, and results display to anyone viewing the block.
+    rpc CastSitePollVote(CastSitePollVoteRequest) returns (SitePollResults);
+    rpc GetSitePollResults(GetSitePollResultsRequest) returns (SitePollResults);
+    // Reactions-block emoji toggles. Both PUBLIC. Toggle is idempotent —
+    // sending the same emoji twice removes the reaction.
+    rpc ToggleSiteReaction(ToggleSiteReactionRequest) returns (SiteReactionCounts);
+    rpc GetSiteReactionCounts(GetSiteReactionCountsRequest) returns (SiteReactionCounts);
+    // Form-block submissions. SubmitSiteForm is the PUBLIC write path used by
+    // form-block visitors (no sites.manage required); ListSiteFormSubmissions
+    // and DeleteSiteFormSubmission are admin inbox reads.
+    rpc SubmitSiteForm(SubmitSiteFormRequest) returns (SiteFormSubmission);
+    rpc ListSiteFormSubmissions(ListSiteFormSubmissionsRequest) returns (ListSiteFormSubmissionsResponse);
+    rpc DeleteSiteFormSubmission(DeleteSiteFormSubmissionRequest) returns (Empty);
+    // Shared theme presets — saved theme blueprints applyable to any site.
+    rpc ListSiteThemePresets(ListSiteThemePresetsRequest) returns (ListSiteThemePresetsResponse);
+    rpc UpsertSiteThemePreset(UpsertSiteThemePresetRequest) returns (SiteThemePreset);
+    rpc DeleteSiteThemePreset(DeleteSiteThemePresetRequest) returns (Empty);
+    // Clone one page (site root or subsite) from source site into a new
+    // subsite on the destination site. Asset references stay literal — same
+    // caveat as SiteTemplate cloning.
+    rpc CopySitePageToSite(CopySitePageToSiteRequest) returns (Subsite);
+    // Site templates — saved blueprints for cloning new sites.
+    rpc ListSiteTemplates(ListSiteTemplatesRequest) returns (ListSiteTemplatesResponse);
+    rpc GetSiteTemplate(GetSiteTemplateRequest) returns (SiteTemplate);
+    rpc UpsertSiteTemplate(UpsertSiteTemplateRequest) returns (SiteTemplate);
+    rpc DeleteSiteTemplate(DeleteSiteTemplateRequest) returns (Empty);
+    // Clone the template into a fresh site. Creates the Site row + each page
+    // as a subsite with its document_json written to the draft (not published)
+    // so the new owner can review before going live.
+    rpc CreateSiteFromTemplate(CreateSiteFromTemplateRequest) returns (Site);
+    // Capture an existing site as a template. Walks its subsites, nav, and
+    // theme; serializes into a SiteTemplate row. Asset references stay
+    // literal — see SiteTemplate docs.
+    rpc SaveSiteAsTemplate(SaveSiteAsTemplateRequest) returns (SiteTemplate);
+    // Cross-site announcement broadcasts. List* is admin-scoped; ListActive is
+    // the public read path used by SiteChrome to render the banner.
+    rpc ListSiteAnnouncements(ListSiteAnnouncementsRequest) returns (ListSiteAnnouncementsResponse);
+    rpc ListActiveSiteAnnouncements(ListActiveSiteAnnouncementsRequest) returns (ListSiteAnnouncementsResponse);
+    rpc UpsertSiteAnnouncement(UpsertSiteAnnouncementRequest) returns (SiteAnnouncement);
+    rpc DeleteSiteAnnouncement(DeleteSiteAnnouncementRequest) returns (Empty);
     // Streaming upload. First chunk MUST carry a UploadSiteAssetHeader; subsequent
     // chunks carry raw bytes. Server replies with the created SiteAsset row when
     // the stream closes successfully. Caller must have sites.manage.
@@ -1621,10 +1699,33 @@ message CreateSiteAssetRequest { SiteAsset asset = 1; }
 message UpdateSiteAssetRequest { SiteAsset asset = 1; }
 message DeleteSiteAssetRequest { int64 id = 1; }
 // Pagination. Server caps page_size at 200; default 50.
-message ListSiteAssetsRequest { int64 site_id = 1; int64 subsite_id = 2; string asset_type = 3; int32 page_size = 4; string page_token = 5; }
+message ListSiteAssetsRequest {
+    int64 site_id = 1;
+    int64 subsite_id = 2;
+    string asset_type = 3;
+    int32 page_size = 4;
+    string page_token = 5;
+    // When true, the response includes is_shared assets from other sites.
+    bool include_shared = 6;
+}
 message ListSiteAssetsResponse { repeated SiteAsset assets = 1; string next_page_token = 2; }
-message GetSiteRenderSnapshotRequest { int64 site_id = 1; string slug = 2; string domain = 3; bool preview = 4; }
-message GetSubsiteRenderSnapshotRequest { int64 site_id = 1; string site_slug = 2; string slug = 3; bool preview = 4; }
+message GetSiteRenderSnapshotRequest {
+    int64 site_id = 1;
+    string slug = 2;
+    string domain = 3;
+    bool preview = 4;
+    // BCP-47 locale (e.g. "en", "pt-BR"). When set, the resolver tries to
+    // return a document whose locale matches; falls back to the empty-locale
+    // row when no match. Empty preserves legacy behaviour.
+    string locale = 5;
+}
+message GetSubsiteRenderSnapshotRequest {
+    int64 site_id = 1;
+    string site_slug = 2;
+    string slug = 3;
+    bool preview = 4;
+    string locale = 5;
+}
 message ListLeaderboardConfigsRequest { string network_id = 1; }
 message ListLeaderboardConfigsResponse { repeated LeaderboardConfig configs = 1; }
 message CreateLeaderboardConfigRequest { LeaderboardConfig config = 1; }
@@ -2223,6 +2324,271 @@ message ApplySiteDocumentSnippetRequest {
     int64 snippet_id = 3;          // either snippet_id or snippet_key
     string snippet_key = 4;
     string after_block_id = 5;     // empty => append to end of top-level blocks
+}
+
+// --- Site Pageview Analytics ---
+message RecordSitePageviewRequest {
+    int64 site_id = 1;
+    int64 subsite_id = 2;
+    string path = 3;
+    // Visitor's referring page host (e.g. "google.com"). Empty for direct
+    // traffic. Hashed PII (ip, ua) is derived from gRPC metadata on the
+    // server side — clients don't send it.
+    string referrer_host = 4;
+    // Raw IP / UA passed through from the Next.js API beacon. The handler
+    // hashes these before storing.
+    string client_ip = 5;
+    string client_user_agent = 6;
+}
+message GetSitePageviewStatsRequest {
+    int64 site_id = 1;
+    int32 days = 2;          // 1..90, default 30
+    int32 top_limit = 3;     // top paths/referrers cap, default 20
+}
+message GetSitePageviewStatsResponse {
+    repeated SitePageviewDailyCount daily = 1;
+    repeated SitePageviewTopPath top_paths = 2;
+    repeated SitePageviewTopReferrer top_referrers = 3;
+}
+
+// --- Site Comments ---
+message CreateSiteCommentRequest {
+    int64 site_id = 1;
+    int64 subsite_id = 2;
+    string block_id = 3;
+    int64 parent_id = 4;       // 0 = top-level
+    string body_md = 5;
+    string author_name = 6;    // display name; required for anonymous, ignored for logged-in
+    string honeypot = 7;       // bots fill this; real visitors leave it empty
+}
+message ListSiteCommentsRequest {
+    string block_id = 1;
+    int32 limit = 2;            // max 500, default 200
+}
+message ListAllSiteCommentsRequest {
+    int64 site_id = 1;
+    int64 subsite_id = 2;
+    string block_id = 3;
+    string status = 4;          // optional: APPROVED | HIDDEN | PENDING
+    int32 limit = 5;
+}
+message ListSiteCommentsResponse {
+    repeated SiteComment comments = 1;
+}
+message SetSiteCommentStatusRequest {
+    int64 id = 1;
+    string status = 2;          // APPROVED | HIDDEN | PENDING
+}
+message DeleteSiteCommentRequest {
+    int64 id = 1;
+}
+
+// --- Site Reactions ---
+message ToggleSiteReactionRequest {
+    int64 site_id = 1;
+    int64 subsite_id = 2;
+    string block_id = 3;
+    string emoji_key = 4;
+}
+message GetSiteReactionCountsRequest {
+    int64 site_id = 1;
+    string block_id = 2;
+}
+
+// --- Site Poll Votes ---
+message CastSitePollVoteRequest {
+    int64 site_id = 1;
+    int64 subsite_id = 2;
+    string block_id = 3;
+    // Selected option keys. Multi-choice polls send 2+; single-choice send 1.
+    repeated string option_keys = 4;
+}
+message GetSitePollResultsRequest {
+    int64 site_id = 1;
+    string block_id = 2;
+}
+
+// --- Site Form Submissions ---
+message SubmitSiteFormRequest {
+    int64 site_id = 1;
+    int64 subsite_id = 2;
+    string block_id = 3;
+    // Form values as a JSON object keyed by each field's `key`.
+    string payload_json = 4;
+    // Honeypot — bots tend to auto-fill every field. Real submitters leave it
+    // empty; if it's non-empty we accept-and-discard to avoid telling the bot
+    // it was caught.
+    string honeypot = 5;
+}
+message ListSiteFormSubmissionsRequest {
+    int64 site_id = 1;
+    int64 subsite_id = 2;
+    string block_id = 3;        // optional: scope to a specific form
+    int32 limit = 4;             // max 500, default 100
+}
+message ListSiteFormSubmissionsResponse {
+    repeated SiteFormSubmission submissions = 1;
+}
+message DeleteSiteFormSubmissionRequest {
+    int64 id = 1;
+}
+
+// --- Site Theme Presets ---
+message ListSiteThemePresetsRequest {}
+message ListSiteThemePresetsResponse {
+    repeated SiteThemePreset presets = 1;
+}
+message UpsertSiteThemePresetRequest {
+    SiteThemePreset preset = 1;
+}
+message DeleteSiteThemePresetRequest {
+    int64 id = 1;
+}
+
+// --- Cross-site page copy ---
+message CopySitePageToSiteRequest {
+    int64 src_site_id = 1;
+    int64 src_subsite_id = 2;     // 0 = site root
+    int64 dst_site_id = 3;
+    string new_slug = 4;           // slug of the new subsite on dst
+    string new_name = 5;           // display name; empty falls back to slug
+}
+
+// --- Site Templates ---
+message ListSiteTemplatesRequest {}
+message ListSiteTemplatesResponse {
+    repeated SiteTemplate templates = 1;
+}
+message GetSiteTemplateRequest {
+    int64 id = 1;            // either id or template_key
+    string template_key = 2;
+}
+message UpsertSiteTemplateRequest {
+    SiteTemplate template = 1;
+}
+message DeleteSiteTemplateRequest {
+    int64 id = 1;
+}
+message CreateSiteFromTemplateRequest {
+    int64 template_id = 1;
+    string template_key = 2;     // either template_id or template_key
+    // New site identity. site_type defaults to CUSTOM, status defaults to DRAFT.
+    string name = 3;
+    string slug = 4;
+    string network_id = 5;       // empty = global
+    string primary_domain = 6;   // empty = no domain mapping yet
+}
+message SaveSiteAsTemplateRequest {
+    int64 site_id = 1;
+    string template_key = 2;     // staff-chosen stable handle
+    string name = 3;
+    string description = 4;
+    string preview_image_url = 5;
+}
+
+// --- Site assets (extensions) ---
+message SetSiteAssetSharedRequest {
+    int64 id = 1;
+    bool is_shared = 2;
+}
+
+// --- Site Domain Aliases ---
+message ListSiteDomainAliasesRequest { int64 site_id = 1; }
+message ListSiteDomainAliasesResponse { repeated SiteDomainAlias aliases = 1; }
+message CreateSiteDomainAliasRequest {
+    int64 site_id = 1;
+    string host = 2;
+}
+message DeleteSiteDomainAliasRequest { int64 id = 1; }
+
+// --- DNS verification ---
+message IssueDomainVerifyChallengeRequest { int64 site_id = 1; }
+message CheckDomainVerificationRequest { int64 site_id = 1; }
+
+// --- Site Vote Events ---
+message RecordSiteVoteEventRequest {
+    int64 site_id = 1;
+    string voter_uuid = 2;
+    string voter_name = 3;
+    string voter_ip = 4;
+    string source = 5;
+    string external_id = 6;
+    string note = 7;
+    google.protobuf.Timestamp occurred_at = 8;
+}
+message ListSiteVoteEventsRequest { int64 site_id = 1; int32 limit = 2; }
+message ListSiteVoteEventsResponse { repeated SiteVoteEvent events = 1; }
+message GetSiteVoteTotalsRequest { int64 site_id = 1; int32 days = 2; }
+message GetSiteVoteTotalsResponse {
+    int64 site_id = 1;
+    int64 vote_count = 2;
+    int64 voter_count = 3;
+    int32 days = 4;
+}
+message DeleteSiteVoteEventRequest { int64 id = 1; }
+
+// --- Site Donation Events ---
+message RecordSiteDonationEventRequest {
+    int64 site_id = 1;
+    string donor_name = 2;
+    int64 amount_minor = 3;
+    string currency = 4;
+    string source = 5;
+    string external_id = 6;
+    string note = 7;
+    google.protobuf.Timestamp occurred_at = 8;  // unset = use server time
+}
+message ListSiteDonationEventsRequest {
+    int64 site_id = 1;
+    int32 limit = 2;
+}
+message ListSiteDonationEventsResponse {
+    repeated SiteDonationEvent events = 1;
+}
+message GetSiteDonationTotalsRequest {
+    int64 site_id = 1;
+    int32 days = 2;                  // rolling window; default 30
+}
+message GetSiteDonationTotalsResponse {
+    int64 site_id = 1;
+    int64 amount_minor = 2;
+    string currency = 3;             // currency of the LARGEST contribution; mixed currencies show their majority
+    int64 donor_count = 4;            // distinct donor_name + external_id
+    int32 days = 5;
+}
+message DeleteSiteDonationEventRequest {
+    int64 id = 1;
+}
+
+// --- Site Document SEO ---
+message UpdateSiteDocumentSEORequest {
+    int64 site_id = 1;
+    int64 subsite_id = 2;
+    string meta_title = 3;
+    string meta_description = 4;
+    int64 og_image_asset_id = 5;
+    string canonical_url = 6;
+    bool noindex = 7;
+    string locale = 8;     // BCP-47 tag; empty = no locale
+}
+
+// --- Site Announcements ---
+// ListSiteAnnouncements returns every announcement (admin view). ListActive
+// scopes to the announcements currently visible for a given site (enabled,
+// inside time window, target scope matches site_id/network_id).
+message ListSiteAnnouncementsRequest {}
+message ListActiveSiteAnnouncementsRequest {
+    int64 site_id = 1;        // optional — empty matches only ALL-scope
+    string network_id = 2;    // optional — used for NETWORK scope
+}
+message ListSiteAnnouncementsResponse {
+    repeated SiteAnnouncement announcements = 1;
+}
+message UpsertSiteAnnouncementRequest {
+    SiteAnnouncement announcement = 1;
+}
+message DeleteSiteAnnouncementRequest {
+    int64 id = 1;
 }
 
 // --- Site Document Workflow ---

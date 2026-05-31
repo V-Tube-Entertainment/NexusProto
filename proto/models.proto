@@ -1194,6 +1194,21 @@ message Site {
     string updated_by_uuid = 26;
     google.protobuf.Timestamp created_at = 27;
     google.protobuf.Timestamp updated_at = 28;
+    // Raw HTML injected into the public chrome's <head>. Used for third-party
+    // analytics snippets (Plausible, Umami, GA4) alongside the built-in
+    // pageview beacon.
+    string analytics_script_html = 29;
+    google.protobuf.Timestamp domain_verified_at = 30;
+    string domain_verify_challenge = 31;
+}
+
+// SiteDomainAlias maps an additional host to a site beyond primary_domain.
+message SiteDomainAlias {
+    int64 id = 1;
+    int64 site_id = 2;
+    string host = 3;
+    string created_by_uuid = 4;
+    google.protobuf.Timestamp created_at = 5;
 }
 
 message Subsite {
@@ -1241,6 +1256,20 @@ message SiteDocument {
     // scheduled_publish_by_uuid as the publishing actor.
     google.protobuf.Timestamp scheduled_publish_at = 12;
     string scheduled_publish_by_uuid = 13;
+    // Per-page SEO metadata. Empty strings fall back to site-level meta on
+    // the parent Site message. og_image_asset_id is a SiteAsset id resolved
+    // to a URL by the renderer. noindex emits a robots meta tag AND
+    // excludes the page from the per-site sitemap.
+    string meta_title = 14;
+    string meta_description = 15;
+    int64 og_image_asset_id = 16;
+    string canonical_url = 17;
+    bool noindex = 18;
+    // BCP-47 locale tag (e.g. "en", "fr", "pt-BR"). Empty = no locale (the
+    // default for all existing documents). The public render route picks
+    // the document matching the visitor's Accept-Language when present;
+    // otherwise falls back to the empty-locale row.
+    string locale = 19;
 }
 
 // SiteDocumentAutosave is an in-editor undo checkpoint. Written automatically by
@@ -1354,6 +1383,8 @@ message SiteAsset {
     // externally-hosted assets.
     string storage_path = 18;
     string checksum_sha256 = 19;
+    // When true, this asset is visible from every site's asset picker.
+    bool is_shared = 20;
 }
 
 message SiteRenderSnapshot {
@@ -1366,6 +1397,13 @@ message SiteRenderSnapshot {
     google.protobuf.Timestamp generated_at = 7;
     // Published block-tree document (JSON). Empty when the site has never been published.
     string document_json = 8;
+    // Per-page SEO metadata copied from the matching SiteDocument so the
+    // public render path doesn't need a second RPC to build the page <head>.
+    string document_meta_title = 9;
+    string document_meta_description = 10;
+    int64 document_og_image_asset_id = 11;
+    string document_canonical_url = 12;
+    bool document_noindex = 13;
 }
 
 message SubsiteRenderSnapshot {
@@ -1378,6 +1416,11 @@ message SubsiteRenderSnapshot {
     string cache_version = 7;
     google.protobuf.Timestamp generated_at = 8;
     string document_json = 9;
+    string document_meta_title = 10;
+    string document_meta_description = 11;
+    int64 document_og_image_asset_id = 12;
+    string document_canonical_url = 13;
+    bool document_noindex = 14;
 }
 
 // Reusable block-tree fragment that staff can stamp into a site/subsite draft.
@@ -1396,6 +1439,204 @@ message SiteDocumentSnippet {
     string updated_by_uuid = 9;
     google.protobuf.Timestamp created_at = 10;
     google.protobuf.Timestamp updated_at = 11;
+}
+
+// SitePageviewDailyCount is one day's pageview + unique-visitor count for
+// a site. Used by the analytics dashboard chart.
+message SitePageviewDailyCount {
+    string day = 1;         // ISO date (YYYY-MM-DD)
+    int64 views = 2;
+    int64 visitors = 3;     // distinct ip_hash count
+}
+
+// SitePageviewTopPath / TopReferrer are aggregate rows for the "Top pages"
+// and "Top referrers" tables in the dashboard.
+message SitePageviewTopPath {
+    string path = 1;
+    int64 views = 2;
+    int64 visitors = 3;
+}
+message SitePageviewTopReferrer {
+    string host = 1;
+    int64 views = 2;
+}
+
+// SiteComment is one comment on a comments block. Threaded via parent_id.
+// status: APPROVED | HIDDEN | PENDING. Public reads return APPROVED only.
+message SiteComment {
+    int64 id = 1;
+    int64 site_id = 2;
+    int64 subsite_id = 3;
+    string block_id = 4;
+    int64 parent_id = 5;        // 0 = top-level
+    string body_md = 6;
+    string author_name = 7;
+    string author_uuid = 8;
+    string author_ip = 9;
+    string status = 10;
+    string moderated_by_uuid = 11;
+    google.protobuf.Timestamp moderated_at = 12;
+    google.protobuf.Timestamp created_at = 13;
+    google.protobuf.Timestamp updated_at = 14;
+}
+
+// SiteReactionCount is one emoji's tally on a reactions block.
+message SiteReactionCount {
+    string emoji_key = 1;
+    int64 count = 2;
+}
+
+// SiteReactionCounts is the public aggregated view: per-emoji counts plus
+// the emojis the current viewer has reacted with (highlighted in the UI).
+message SiteReactionCounts {
+    string block_id = 1;
+    repeated SiteReactionCount counts = 2;
+    repeated string viewer_picks = 3;
+}
+
+// SitePollOptionResult is one option's tally inside a poll block. count is
+// the number of voters who picked this option; for multi-choice polls a
+// single voter can contribute to multiple options.
+message SitePollOptionResult {
+    string option_key = 1;
+    int64 count = 2;
+}
+
+// SitePollResults is the public, aggregated view of a poll block. No PII —
+// just per-option counts plus the total distinct voter count.
+message SitePollResults {
+    string block_id = 1;
+    repeated SitePollOptionResult options = 2;
+    int64 total_voters = 3;
+    bool viewer_has_voted = 4;
+}
+
+// SiteVoteEvent is one Votifier-style vote logged for a site. Aggregation is
+// COUNT(*) over a rolling window — no amount field. external_id dedupes
+// webhook re-deliveries.
+message SiteVoteEvent {
+    int64 id = 1;
+    int64 site_id = 2;
+    string voter_uuid = 3;
+    string voter_name = 4;
+    string voter_ip = 5;
+    string source = 6;
+    string external_id = 7;
+    string note = 8;
+    google.protobuf.Timestamp occurred_at = 9;
+    google.protobuf.Timestamp created_at = 10;
+}
+
+// SiteDonationEvent is one logged donation, typically from a Tebex webhook.
+// Stored verbatim so block aggregations can compute monthly totals without
+// hitting the external API per render.
+message SiteDonationEvent {
+    int64 id = 1;
+    int64 site_id = 2;
+    // Donor display name (may be empty for anonymous Tebex purchases).
+    string donor_name = 3;
+    // Amount in minor units of `currency` (cents for USD, pence for GBP, etc.).
+    int64 amount_minor = 4;
+    string currency = 5;          // ISO 4217 (USD, EUR, GBP, ...)
+    string source = 6;             // free-form: "tebex" | "manual" | etc.
+    string external_id = 7;        // dedup key — e.g. Tebex transaction id
+    string note = 8;               // optional comment shown in dashboard
+    google.protobuf.Timestamp occurred_at = 9;
+    google.protobuf.Timestamp created_at = 10;
+}
+
+// SiteFormSubmission is one inbox row from a form block submission. payload_json
+// holds the typed values keyed by each form field's `key`. submitter_uuid is
+// empty for anonymous submissions.
+message SiteFormSubmission {
+    int64 id = 1;
+    int64 site_id = 2;
+    int64 subsite_id = 3;
+    string block_id = 4;
+    string payload_json = 5;
+    string submitter_uuid = 6;
+    string submitter_ip = 7;
+    string user_agent = 8;
+    google.protobuf.Timestamp created_at = 9;
+}
+
+// SiteThemePreset is a saved theme blueprint. Apply with one click from the
+// site editor. theme_json is the same shape as Site.theme_config_json.
+message SiteThemePreset {
+    int64 id = 1;
+    string preset_key = 2;
+    string name = 3;
+    string description = 4;
+    string theme_json = 5;
+    string created_by_uuid = 6;
+    string updated_by_uuid = 7;
+    google.protobuf.Timestamp created_at = 8;
+    google.protobuf.Timestamp updated_at = 9;
+}
+
+// SiteTemplatePage is one page entry inside a SiteTemplate's pages list.
+// subsite_slug = "" identifies the site root. document_json is the published
+// snapshot the new site will start with (written into the draft on clone, NOT
+// auto-published). Per-page SEO mirrors the SiteDocument fields.
+message SiteTemplatePage {
+    string subsite_slug = 1;
+    string name = 2;
+    string document_json = 3;
+    string meta_title = 4;
+    string meta_description = 5;
+    int64 og_image_asset_id = 6;
+    string canonical_url = 7;
+    bool noindex = 8;
+}
+
+// SiteTemplate captures a site blueprint — theme + nav + pages. Used by
+// CreateSiteFromTemplate to spin up a new site pre-populated with the
+// template's content. Asset references inside document_json are NOT rewritten
+// during the clone; the new site owner re-uploads and re-picks assets after
+// the site is created.
+message SiteTemplate {
+    int64 id = 1;
+    string template_key = 2;
+    string name = 3;
+    string description = 4;
+    string preview_image_url = 5;
+    // Site theme JSON (same shape as Site.theme_config_json).
+    string theme_json = 6;
+    // Flat list of nav items: [{label, href, target, sortOrder}, ...]
+    string nav_json = 7;
+    // Decoded pages list. Stored on the server as the JSON string field
+    // pages_json; surfaced as typed messages on the wire so clients don't
+    // need to parse a second blob.
+    repeated SiteTemplatePage pages = 8;
+    string created_by_uuid = 9;
+    string updated_by_uuid = 10;
+    google.protobuf.Timestamp created_at = 11;
+    google.protobuf.Timestamp updated_at = 12;
+}
+
+// SiteAnnouncement is a cross-site banner broadcast. target_scope =
+// ALL | NETWORK | SITES. starts_at / ends_at are optional bounds (empty =
+// open). dismissible controls whether the banner offers a "close" button on
+// the public site; dismissal is client-side per id (localStorage), no
+// per-user state on the server.
+message SiteAnnouncement {
+    int64 id = 1;
+    string title = 2;
+    string body = 3;
+    string variant = 4;                       // INFO | SUCCESS | WARNING | DANGER
+    string link_url = 5;
+    string link_label = 6;
+    google.protobuf.Timestamp starts_at = 7;  // unset = no lower bound
+    google.protobuf.Timestamp ends_at = 8;    // unset = no upper bound
+    string target_scope = 9;                  // ALL | NETWORK | SITES
+    string target_network_id = 10;            // used when target_scope = NETWORK
+    repeated int64 target_site_ids = 11;      // used when target_scope = SITES
+    bool dismissible = 12;
+    bool enabled = 13;
+    string created_by_uuid = 14;
+    string updated_by_uuid = 15;
+    google.protobuf.Timestamp created_at = 16;
+    google.protobuf.Timestamp updated_at = 17;
 }
 
 // ============================================================
