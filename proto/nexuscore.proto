@@ -579,6 +579,55 @@ service NexusService {
 
     // --- LuckPerms ---
     rpc UpdateLuckPermsData(LuckPermsDataRequest) returns (Empty);
+
+    // --- Wiki ---
+    rpc GetWikiSettings(GetWikiSettingsRequest) returns (WikiSettings);
+    rpc UpsertWikiSettings(UpsertWikiSettingsRequest) returns (WikiSettings);
+    rpc ListWikiArticles(ListWikiArticlesRequest) returns (ListWikiArticlesResponse);
+    rpc GetWikiArticle(GetWikiArticleRequest) returns (WikiArticle);
+    rpc CreateWikiArticle(CreateWikiArticleRequest) returns (WikiArticle);
+    rpc UpdateWikiArticleMeta(UpdateWikiArticleMetaRequest) returns (WikiArticle);
+    rpc DeleteWikiArticle(DeleteWikiArticleRequest) returns (Empty);
+    rpc UpdateWikiArticleDraft(UpdateWikiArticleDraftRequest) returns (WikiArticle);
+    rpc PublishWikiArticle(PublishWikiArticleRequest) returns (WikiArticle);
+    rpc ListWikiArticleRevisions(ListWikiArticleRevisionsRequest) returns (ListWikiArticleRevisionsResponse);
+    rpc GetWikiArticleRevision(GetWikiArticleRevisionRequest) returns (WikiArticleRevision);
+    rpc RevertWikiArticleRevision(RevertWikiArticleRevisionRequest) returns (WikiArticle);
+    rpc SearchWikiArticles(SearchWikiArticlesRequest) returns (ListWikiArticlesResponse);
+    rpc ClaimWikiArticleLock(ClaimWikiArticleLockRequest) returns (WikiArticleLock);
+    rpc ReleaseWikiArticleLock(ReleaseWikiArticleLockRequest) returns (Empty);
+    rpc GetWikiArticleLock(GetWikiArticleLockRequest) returns (WikiArticleLock);
+
+    // --- Blog ---
+    rpc GetBlogSettings(GetBlogSettingsRequest) returns (BlogSettings);
+    rpc UpsertBlogSettings(UpsertBlogSettingsRequest) returns (BlogSettings);
+    rpc ListBlogPosts(ListBlogPostsRequest) returns (ListBlogPostsResponse);
+    rpc GetBlogPost(GetBlogPostRequest) returns (BlogPost);
+    rpc CreateBlogPost(CreateBlogPostRequest) returns (BlogPost);
+    rpc UpdateBlogPostMeta(UpdateBlogPostMetaRequest) returns (BlogPost);
+    rpc DeleteBlogPost(DeleteBlogPostRequest) returns (Empty);
+    rpc UpdateBlogPostDraft(UpdateBlogPostDraftRequest) returns (BlogPost);
+    rpc PublishBlogPost(PublishBlogPostRequest) returns (BlogPost);
+    rpc ScheduleBlogPost(ScheduleBlogPostRequest) returns (BlogPost);
+    rpc ListBlogPostVersions(ListBlogPostVersionsRequest) returns (ListBlogPostVersionsResponse);
+    rpc ListBlogArchiveBuckets(ListBlogArchiveBucketsRequest) returns (ListBlogArchiveBucketsResponse);
+    rpc SearchBlogPosts(SearchBlogPostsRequest) returns (ListBlogPostsResponse);
+    rpc ClaimBlogPostLock(ClaimBlogPostLockRequest) returns (BlogPostLock);
+    rpc ReleaseBlogPostLock(ReleaseBlogPostLockRequest) returns (Empty);
+    rpc GetBlogPostLock(GetBlogPostLockRequest) returns (BlogPostLock);
+
+    // --- Content taxonomy (shared wiki + blog) ---
+    rpc ListContentCategories(ListContentCategoriesRequest) returns (ListContentCategoriesResponse);
+    rpc CreateContentCategory(CreateContentCategoryRequest) returns (ContentCategory);
+    rpc UpdateContentCategory(UpdateContentCategoryRequest) returns (ContentCategory);
+    rpc DeleteContentCategory(DeleteContentCategoryRequest) returns (Empty);
+    rpc ListContentTags(ListContentTagsRequest) returns (ListContentTagsResponse);
+    rpc UpsertContentTag(UpsertContentTagRequest) returns (ContentTag);
+    rpc DeleteContentTag(DeleteContentTagRequest) returns (Empty);
+    rpc SetTargetCategories(SetTargetCategoriesRequest) returns (Empty);
+    rpc SetTargetTags(SetTargetTagsRequest) returns (Empty);
+    rpc ListCategoriesForTarget(ListForTargetRequest) returns (ListContentCategoriesResponse);
+    rpc ListTagsForTarget(ListForTargetRequest) returns (ListContentTagsResponse);
 }
 
 // ============================================================
@@ -2298,6 +2347,84 @@ message ListHomepageWidgetsRequest {
 message ListHomepageWidgetsResponse { repeated HomepageWidget widgets = 1; }
 message ReorderHomepageWidgetsRequest { repeated int64 ordered_ids = 1; }
 
+// --- Wiki ---
+message GetWikiSettingsRequest { int64 site_id = 1; }
+message UpsertWikiSettingsRequest { WikiSettings settings = 1; }
+// Pagination. Server caps page_size at 200; default 50.
+message ListWikiArticlesRequest { int64 site_id = 1; bool include_drafts = 2; int32 page_size = 3; string page_token = 4; }
+message ListWikiArticlesResponse { repeated WikiArticle articles = 1; string next_page_token = 2; int32 total_count = 3; }
+// Resolve by id (preferred) or (site_id, slug_path) for the public renderer.
+message GetWikiArticleRequest { int64 id = 1; int64 site_id = 2; string slug_path = 3; }
+message CreateWikiArticleRequest { WikiArticle article = 1; }
+message UpdateWikiArticleMetaRequest { WikiArticle article = 1; }
+message DeleteWikiArticleRequest { int64 id = 1; }
+// force_unlock=true overrides another editor's lock (admin only).
+message UpdateWikiArticleDraftRequest { int64 article_id = 1; string draft_json = 2; string change_summary = 3; bool force_unlock = 4; }
+// body_text is the plain-text projection (caller extracts from blocks).
+// Empty body_text leaves the search row untouched.
+message PublishWikiArticleRequest { int64 article_id = 1; string body_text = 2; }
+message ListWikiArticleRevisionsRequest { int64 article_id = 1; int32 page_size = 2; string page_token = 3; }
+message ListWikiArticleRevisionsResponse { repeated WikiArticleRevision revisions = 1; string next_page_token = 2; }
+message GetWikiArticleRevisionRequest { int64 article_id = 1; int32 revision_number = 2; }
+message RevertWikiArticleRevisionRequest { int64 article_id = 1; int32 revision_number = 2; }
+message SearchWikiArticlesRequest { int64 site_id = 1; string query = 2; bool published_only = 3; int32 page_size = 4; }
+message ClaimWikiArticleLockRequest { int64 article_id = 1; string holder_name = 2; }
+message ReleaseWikiArticleLockRequest { int64 article_id = 1; }
+// Empty WikiArticleLock (article_id=0, holder_uuid="") when no lock is held.
+message GetWikiArticleLockRequest { int64 article_id = 1; }
+
+// --- Blog ---
+message GetBlogSettingsRequest { int64 site_id = 1; }
+message UpsertBlogSettingsRequest { BlogSettings settings = 1; }
+// Filters: status_filter ("DRAFT"/"PUBLISHED"/"SCHEDULED"/"ARCHIVED"; empty=all).
+// published_only is the public path shortcut. category_id / tag_id filter via
+// the polymorphic taxonomy maps. year+month bound published_at for archives.
+message ListBlogPostsRequest {
+    int64 site_id = 1;
+    string status_filter = 2;
+    string author_uuid = 3;
+    int64 category_id = 4;
+    int64 tag_id = 5;
+    int32 year = 6;
+    int32 month = 7;
+    bool published_only = 8;
+    int32 page_size = 9;
+    string page_token = 10;
+}
+message ListBlogPostsResponse { repeated BlogPost posts = 1; string next_page_token = 2; int32 total_count = 3; }
+// Resolve by id (preferred) or (site_id, slug) for the public renderer.
+message GetBlogPostRequest { int64 id = 1; int64 site_id = 2; string slug = 3; }
+message CreateBlogPostRequest { BlogPost post = 1; }
+message UpdateBlogPostMetaRequest { BlogPost post = 1; }
+message DeleteBlogPostRequest { int64 id = 1; }
+message UpdateBlogPostDraftRequest { int64 post_id = 1; string draft_json = 2; bool force_unlock = 3; }
+message PublishBlogPostRequest { int64 post_id = 1; }
+message ScheduleBlogPostRequest { int64 post_id = 1; google.protobuf.Timestamp publish_at = 2; }
+message ListBlogPostVersionsRequest { int64 post_id = 1; int32 page_size = 2; string page_token = 3; }
+message ListBlogPostVersionsResponse { repeated BlogPostVersion versions = 1; string next_page_token = 2; }
+message ListBlogArchiveBucketsRequest { int64 site_id = 1; }
+message BlogArchiveBucket { int32 year = 1; int32 month = 2; int64 count = 3; }
+message ListBlogArchiveBucketsResponse { repeated BlogArchiveBucket buckets = 1; }
+message SearchBlogPostsRequest { int64 site_id = 1; string query = 2; bool published_only = 3; int32 page_size = 4; }
+message ClaimBlogPostLockRequest { int64 post_id = 1; string holder_name = 2; }
+message ReleaseBlogPostLockRequest { int64 post_id = 1; }
+message GetBlogPostLockRequest { int64 post_id = 1; }
+
+// --- Content taxonomy (shared wiki + blog) ---
+// kind is "WIKI" or "BLOG". target_kind on the maps mirrors `kind`.
+message ListContentCategoriesRequest { int64 site_id = 1; string kind = 2; }
+message ListContentCategoriesResponse { repeated ContentCategory categories = 1; }
+message CreateContentCategoryRequest { ContentCategory category = 1; }
+message UpdateContentCategoryRequest { ContentCategory category = 1; }
+message DeleteContentCategoryRequest { int64 id = 1; }
+message ListContentTagsRequest { int64 site_id = 1; string kind = 2; }
+message ListContentTagsResponse { repeated ContentTag tags = 1; }
+message UpsertContentTagRequest { ContentTag tag = 1; }
+message DeleteContentTagRequest { int64 id = 1; }
+message SetTargetCategoriesRequest { string target_kind = 1; int64 target_id = 2; repeated int64 category_ids = 3; }
+message SetTargetTagsRequest { string target_kind = 1; int64 target_id = 2; repeated int64 tag_ids = 3; }
+message ListForTargetRequest { string target_kind = 1; int64 target_id = 2; }
+
 // --- Site Document Snippets ---
 // Snippets are reusable block-tree fragments. Apply inserts a snippet's blocks
 // into a (site, subsite) draft document at the given position. Server appends
@@ -2371,6 +2498,11 @@ message ListAllSiteCommentsRequest {
     string block_id = 3;
     string status = 4;          // optional: APPROVED | HIDDEN | PENDING
     int32 limit = 5;
+    // Polymorphic target: when set, returns comments whose target_kind+target_id
+    // match (e.g. target_kind="BLOG_POST", target_id=<post.id>). When unset,
+    // falls back to the legacy block_id + site_id filter.
+    string target_kind = 6;
+    int64 target_id = 7;
 }
 message ListSiteCommentsResponse {
     repeated SiteComment comments = 1;

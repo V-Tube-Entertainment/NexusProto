@@ -1640,6 +1640,181 @@ message SiteAnnouncement {
 }
 
 // ============================================================
+// Wiki
+// ============================================================
+
+// Per-site wiki configuration. One row per site that has a wiki enabled.
+message WikiSettings {
+    int64 site_id = 1;
+    int64 subsite_id = 2;
+    bool enabled = 3;
+    string path_prefix = 4;
+    int64 home_article_id = 5;
+    string settings_json = 6;
+    google.protobuf.Timestamp created_at = 7;
+    google.protobuf.Timestamp updated_at = 8;
+}
+
+// One hierarchical wiki article. `draft_json` / `published_json` use the same
+// block-tree shape as SiteDocument. `slug_path` is the denormalized full path
+// (e.g. "guides/getting-started"). `current_revision` counts per-edit
+// revisions stored in WikiArticleRevision (Wikipedia-style, not per-publish).
+message WikiArticle {
+    int64 id = 1;
+    int64 site_id = 2;
+    int64 parent_id = 3;
+    string slug = 4;
+    string slug_path = 5;
+    string title = 6;
+    string summary = 7;
+    string status = 8;
+    string draft_json = 9;
+    string published_json = 10;
+    int32 current_revision = 11;
+    google.protobuf.Timestamp last_published_at = 12;
+    string last_published_by_uuid = 13;
+    int32 sort_order = 14;
+    string meta_title = 15;
+    string meta_description = 16;
+    int64 og_image_asset_id = 17;
+    string canonical_url = 18;
+    bool noindex = 19;
+    string locale = 20;
+    string created_by_uuid = 21;
+    string updated_by_uuid = 22;
+    google.protobuf.Timestamp created_at = 23;
+    google.protobuf.Timestamp updated_at = 24;
+}
+
+message WikiArticleRevision {
+    int64 id = 1;
+    int64 article_id = 2;
+    int32 revision_number = 3;
+    string title = 4;
+    string body_json = 5;
+    string change_summary = 6;
+    bool is_published = 7;
+    string author_uuid = 8;
+    google.protobuf.Timestamp created_at = 9;
+}
+
+message WikiArticleAutosave {
+    int64 id = 1;
+    int64 article_id = 2;
+    string draft_json = 3;
+    string created_by_uuid = 4;
+    google.protobuf.Timestamp created_at = 5;
+}
+
+message WikiArticleLock {
+    int64 article_id = 1;
+    string holder_uuid = 2;
+    string holder_name = 3;
+    google.protobuf.Timestamp claimed_at = 4;
+    google.protobuf.Timestamp expires_at = 5;
+}
+
+// ============================================================
+// Blog
+// ============================================================
+
+message BlogSettings {
+    int64 site_id = 1;
+    int64 subsite_id = 2;
+    bool enabled = 3;
+    string path_prefix = 4;
+    int32 posts_per_page = 5;
+    bool feed_enabled = 6;
+    string feed_title = 7;
+    string settings_json = 8;
+    google.protobuf.Timestamp created_at = 9;
+    google.protobuf.Timestamp updated_at = 10;
+}
+
+// One authored blog post. `publish_at` is the scheduled fire time when status
+// is SCHEDULED; `published_at` is the effective publish time (stamped on the
+// first DRAFT->PUBLISHED transition) and is what archives sort by.
+message BlogPost {
+    int64 id = 1;
+    int64 site_id = 2;
+    string author_uuid = 3;
+    string slug = 4;
+    string title = 5;
+    string excerpt = 6;
+    int64 hero_asset_id = 7;
+    string status = 8;
+    string draft_json = 9;
+    string published_json = 10;
+    int32 current_version = 11;
+    google.protobuf.Timestamp publish_at = 12;
+    google.protobuf.Timestamp published_at = 13;
+    google.protobuf.Timestamp unpublish_at = 14;
+    bool allow_comments = 15;
+    string meta_title = 16;
+    string meta_description = 17;
+    int64 og_image_asset_id = 18;
+    string canonical_url = 19;
+    bool noindex = 20;
+    string locale = 21;
+    google.protobuf.Timestamp created_at = 22;
+    google.protobuf.Timestamp updated_at = 23;
+}
+
+message BlogPostVersion {
+    int64 id = 1;
+    int64 post_id = 2;
+    int32 version_number = 3;
+    string document_json = 4;
+    string published_by_uuid = 5;
+    google.protobuf.Timestamp published_at = 6;
+}
+
+message BlogPostAutosave {
+    int64 id = 1;
+    int64 post_id = 2;
+    string draft_json = 3;
+    string created_by_uuid = 4;
+    google.protobuf.Timestamp created_at = 5;
+}
+
+message BlogPostLock {
+    int64 post_id = 1;
+    string holder_uuid = 2;
+    string holder_name = 3;
+    google.protobuf.Timestamp claimed_at = 4;
+    google.protobuf.Timestamp expires_at = 5;
+}
+
+// ============================================================
+// Content taxonomy (shared wiki + blog)
+// ============================================================
+
+// Categories/tags scoped by `kind` ("WIKI" or "BLOG") so wiki and blog don't
+// collide. Assignment to articles/posts is polymorphic via (target_kind,
+// target_id).
+message ContentCategory {
+    int64 id = 1;
+    int64 site_id = 2;
+    string kind = 3;
+    string slug = 4;
+    string name = 5;
+    string description = 6;
+    int64 parent_id = 7;
+    int32 sort_order = 8;
+    google.protobuf.Timestamp created_at = 9;
+    google.protobuf.Timestamp updated_at = 10;
+}
+
+message ContentTag {
+    int64 id = 1;
+    int64 site_id = 2;
+    string kind = 3;
+    string slug = 4;
+    string name = 5;
+    google.protobuf.Timestamp created_at = 6;
+}
+
+// ============================================================
 // Common / Utility
 // ============================================================
 
