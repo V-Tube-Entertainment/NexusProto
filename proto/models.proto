@@ -1684,6 +1684,20 @@ message WikiArticle {
     string updated_by_uuid = 22;
     google.protobuf.Timestamp created_at = 23;
     google.protobuf.Timestamp updated_at = 24;
+    bool is_template = 25;
+    google.protobuf.Timestamp publish_at = 26;
+}
+
+// Per-article permission grant (see migration 076). Additive on top of the
+// global wiki.* perms; principals get role privileges on the article AND
+// every descendant of it.
+message WikiArticlePermission {
+    int64 article_id = 1;
+    string principal_type = 2; // "USER"
+    string principal_id = 3;   // UUID
+    string role = 4;           // VIEWER | EDITOR | OWNER
+    google.protobuf.Timestamp created_at = 5;
+    google.protobuf.Timestamp updated_at = 6;
 }
 
 message WikiArticleRevision {

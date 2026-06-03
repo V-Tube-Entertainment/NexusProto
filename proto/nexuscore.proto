@@ -319,6 +319,11 @@ service NexusService {
     rpc ListSiteDomainAliases(ListSiteDomainAliasesRequest) returns (ListSiteDomainAliasesResponse);
     rpc CreateSiteDomainAlias(CreateSiteDomainAliasRequest) returns (SiteDomainAlias);
     rpc DeleteSiteDomainAlias(DeleteSiteDomainAliasRequest) returns (Empty);
+    // Flat list of every host the platform owns TLS for: union of every
+    // verified Site.primary_domain plus every SiteDomainAlias.host. Consumed
+    // by edge-proxy integrations (Caddy on-demand TLS, Apache mod_md include
+    // generator, certbot wrappers) — see NexusWeb /api/internal/domains.
+    rpc ListVerifiedDomains(ListVerifiedDomainsRequest) returns (ListVerifiedDomainsResponse);
     // DNS verification: issue a per-site TXT challenge + check it landed.
     rpc IssueDomainVerifyChallenge(IssueDomainVerifyChallengeRequest) returns (Site);
     rpc CheckDomainVerification(CheckDomainVerificationRequest) returns (Site);
@@ -597,6 +602,18 @@ service NexusService {
     rpc ClaimWikiArticleLock(ClaimWikiArticleLockRequest) returns (WikiArticleLock);
     rpc ReleaseWikiArticleLock(ReleaseWikiArticleLockRequest) returns (Empty);
     rpc GetWikiArticleLock(GetWikiArticleLockRequest) returns (WikiArticleLock);
+    rpc ScheduleWikiArticle(ScheduleWikiArticleRequest) returns (WikiArticle);
+    rpc ClearWikiArticleSchedule(ClearWikiArticleScheduleRequest) returns (WikiArticle);
+    rpc LookupWikiAlias(LookupWikiAliasRequest) returns (WikiArticle);
+    rpc ListWikiBacklinks(ListWikiBacklinksRequest) returns (ListWikiArticlesResponse);
+    rpc RecordWikiArticleView(RecordWikiArticleViewRequest) returns (Empty);
+    rpc GetWikiArticleViewCount(GetWikiArticleViewCountRequest) returns (GetWikiArticleViewCountResponse);
+    rpc WatchWikiArticle(WatchWikiArticleRequest) returns (Empty);
+    rpc UnwatchWikiArticle(UnwatchWikiArticleRequest) returns (Empty);
+    rpc IsWatchingWikiArticle(IsWatchingWikiArticleRequest) returns (IsWatchingWikiArticleResponse);
+    rpc SetWikiArticlePermission(SetWikiArticlePermissionRequest) returns (WikiArticlePermission);
+    rpc RemoveWikiArticlePermission(RemoveWikiArticlePermissionRequest) returns (Empty);
+    rpc ListWikiArticlePermissions(ListWikiArticlePermissionsRequest) returns (ListWikiArticlePermissionsResponse);
 
     // --- Blog ---
     rpc GetBlogSettings(GetBlogSettingsRequest) returns (BlogSettings);
@@ -2372,6 +2389,46 @@ message ClaimWikiArticleLockRequest { int64 article_id = 1; string holder_name =
 message ReleaseWikiArticleLockRequest { int64 article_id = 1; }
 // Empty WikiArticleLock (article_id=0, holder_uuid="") when no lock is held.
 message GetWikiArticleLockRequest { int64 article_id = 1; }
+// Flips an article to status=SCHEDULED with publish_at=t. The wiki publish
+// scheduler tick promotes it to PUBLISHED when the time elapses.
+message ScheduleWikiArticleRequest { int64 article_id = 1; google.protobuf.Timestamp publish_at = 2; }
+// Cancels a pending schedule (no-op if the article is not SCHEDULED).
+message ClearWikiArticleScheduleRequest { int64 article_id = 1; }
+// Resolves a stale slug_path to its current article via wiki_article_aliases.
+// Returns the empty WikiArticle (id=0) when no alias matches.
+message LookupWikiAliasRequest { int64 site_id = 1; string slug_path = 2; }
+// Lists every published article whose body links to the target article via
+// an internal wiki URL — powers the reader's "Referenced by" section.
+message ListWikiBacklinksRequest { int64 article_id = 1; }
+// Fire-and-forget view counter increment. Caller dedups per-session via a
+// cookie so reloads don't inflate the counter.
+message RecordWikiArticleViewRequest { int64 article_id = 1; }
+message GetWikiArticleViewCountRequest { int64 article_id = 1; }
+message GetWikiArticleViewCountResponse { int64 view_count = 1; }
+// Subscribe to publish notifications for an article. The caller's UUID
+// (from the session) becomes the recipient; the request itself only carries
+// the article id.
+message WatchWikiArticleRequest { int64 article_id = 1; }
+message UnwatchWikiArticleRequest { int64 article_id = 1; }
+message IsWatchingWikiArticleRequest { int64 article_id = 1; }
+message IsWatchingWikiArticleResponse { bool watching = 1; }
+// Per-article permission grant. Additive on top of global wiki.* perms; see
+// migration 076 for inheritance + role semantics.
+message SetWikiArticlePermissionRequest {
+    int64 article_id = 1;
+    string principal_type = 2; // "USER" today
+    string principal_id = 3;   // UUID
+    string role = 4;           // VIEWER | EDITOR | OWNER
+}
+message RemoveWikiArticlePermissionRequest {
+    int64 article_id = 1;
+    string principal_type = 2;
+    string principal_id = 3;
+}
+message ListWikiArticlePermissionsRequest { int64 article_id = 1; }
+message ListWikiArticlePermissionsResponse {
+    repeated WikiArticlePermission permissions = 1;
+}
 
 // --- Blog ---
 message GetBlogSettingsRequest { int64 site_id = 1; }
@@ -2487,10 +2544,19 @@ message CreateSiteCommentRequest {
     string body_md = 5;
     string author_name = 6;    // display name; required for anonymous, ignored for logged-in
     string honeypot = 7;       // bots fill this; real visitors leave it empty
+    // Polymorphic target. When target_kind is set (e.g. "WIKI_ARTICLE",
+    // "BLOG_POST"), the comment attaches to (target_kind, target_id) and
+    // block_id may be empty. When unset, falls back to legacy block_id keying.
+    string target_kind = 8;
+    int64 target_id = 9;
 }
 message ListSiteCommentsRequest {
     string block_id = 1;
     int32 limit = 2;            // max 500, default 200
+    // Polymorphic target — same semantics as CreateSiteCommentRequest. When
+    // target_kind is set, block_id is ignored and the polymorphic key wins.
+    string target_kind = 3;
+    int64 target_id = 4;
 }
 message ListAllSiteCommentsRequest {
     int64 site_id = 1;
@@ -2632,6 +2698,8 @@ message CreateSiteDomainAliasRequest {
     string host = 2;
 }
 message DeleteSiteDomainAliasRequest { int64 id = 1; }
+message ListVerifiedDomainsRequest {}
+message ListVerifiedDomainsResponse { repeated string hosts = 1; }
 
 // --- DNS verification ---
 message IssueDomainVerifyChallengeRequest { int64 site_id = 1; }
