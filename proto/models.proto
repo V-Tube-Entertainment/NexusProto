@@ -1090,6 +1090,13 @@ message ContributorRole {
     bool visible = 6;
     google.protobuf.Timestamp created_at = 7;
     google.protobuf.Timestamp updated_at = 8;
+    // 0 = global role (shown on global /staff). Non-zero = the role belongs
+    // to that site and surfaces on /sites/[siteSlug]/staff.
+    int64 site_id = 9;
+    // Populated server-side when site_id is non-zero. Convenience for the
+    // public profile page so it doesn't have to look up the site separately.
+    string site_slug = 10;
+    string site_name = 11;
 }
 
 message ContributorRoleMember {

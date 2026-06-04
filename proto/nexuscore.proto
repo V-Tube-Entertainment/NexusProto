@@ -1447,6 +1447,11 @@ message UpdateStaffTeamDisplayRequest {
 // --- Contributors ---
 message ListContributorRolesRequest {
     bool visible_only = 1;
+    // Filter scope:
+    //   site_filter unset (= 0)  -> all roles (used by the dashboard)
+    //   site_filter = -1         -> global roles only (site_id IS NULL)
+    //   site_filter > 0          -> roles belonging to that site_id
+    int64 site_filter = 2;
 }
 message ListContributorRolesResponse {
     repeated ContributorRole roles = 1;
@@ -1483,7 +1488,10 @@ message UpdateContributorMemberRequest {
 message RemoveContributorMemberRequest {
     int32 id = 1;
 }
-message ListPublicContributorsRequest {}
+message ListPublicContributorsRequest {
+    // Same convention as ListContributorRolesRequest.site_filter.
+    int64 site_filter = 1;
+}
 message ListPublicContributorsResponse {
     repeated ContributorRoleWithMembers roles = 1;
 }
