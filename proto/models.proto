@@ -1110,6 +1110,10 @@ message ContributorRoleMember {
     google.protobuf.Timestamp created_at = 8;
     google.protobuf.Timestamp updated_at = 9;
     string profile_slug = 10;
+    // Extra sites this member shows up on, layered on top of the role's
+    // own site_id. /sites/<slug>/staff lists members where the role
+    // matches OR the site is in this list.
+    repeated int64 site_ids = 11;
 }
 
 message ContributorRoleWithMembers {

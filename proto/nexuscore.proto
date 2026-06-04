@@ -178,6 +178,7 @@ service NexusService {
     rpc AddContributorMember(AddContributorMemberRequest) returns (ContributorRoleMember);
     rpc UpdateContributorMember(UpdateContributorMemberRequest) returns (ContributorRoleMember);
     rpc RemoveContributorMember(RemoveContributorMemberRequest) returns (Empty);
+    rpc SetContributorMemberSites(SetContributorMemberSitesRequest) returns (Empty);
     rpc ListPublicContributors(ListPublicContributorsRequest) returns (ListPublicContributorsResponse);
     rpc GetContributorProfile(GetContributorProfileRequest) returns (ContributorProfileFull);
     rpc UpsertContributorProfile(UpsertContributorProfileRequest) returns (ContributorProfile);
@@ -1487,6 +1488,10 @@ message UpdateContributorMemberRequest {
 }
 message RemoveContributorMemberRequest {
     int32 id = 1;
+}
+message SetContributorMemberSitesRequest {
+    int32 member_id = 1;
+    repeated int64 site_ids = 2;
 }
 message ListPublicContributorsRequest {
     // Same convention as ListContributorRolesRequest.site_filter.
