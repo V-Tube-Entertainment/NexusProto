@@ -1102,11 +1102,52 @@ message ContributorRoleMember {
     int32 sort_order = 7;
     google.protobuf.Timestamp created_at = 8;
     google.protobuf.Timestamp updated_at = 9;
+    string profile_slug = 10;
 }
 
 message ContributorRoleWithMembers {
     ContributorRole role = 1;
     repeated ContributorRoleMember members = 2;
+}
+
+message ContributorProfile {
+    int32 id = 1;
+    int32 staff_account_id = 2;
+    string player_uuid = 3;
+    string slug = 4;
+    string display_name = 5;
+    string tagline = 6;
+    string pronouns = 7;
+    string bio = 8;
+    string staff_since = 9; // YYYY-MM-DD, empty when unset
+    string avatar_url = 10;
+    bool visible = 11;
+    google.protobuf.Timestamp created_at = 12;
+    google.protobuf.Timestamp updated_at = 13;
+}
+
+message ContributorProfileLink {
+    int32 id = 1;
+    int32 profile_id = 2;
+    string link_type = 3;
+    string label = 4;
+    string url = 5;
+    int32 sort_order = 6;
+}
+
+message ContributorProfileField {
+    int32 id = 1;
+    int32 profile_id = 2;
+    string field_key = 3;
+    string field_value = 4;
+    int32 sort_order = 5;
+}
+
+message ContributorProfileFull {
+    ContributorProfile profile = 1;
+    repeated ContributorProfileLink links = 2;
+    repeated ContributorProfileField fields = 3;
+    repeated ContributorRole roles = 4;
 }
 
 message LeaderboardConfig {

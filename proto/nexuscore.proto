@@ -179,6 +179,10 @@ service NexusService {
     rpc UpdateContributorMember(UpdateContributorMemberRequest) returns (ContributorRoleMember);
     rpc RemoveContributorMember(RemoveContributorMemberRequest) returns (Empty);
     rpc ListPublicContributors(ListPublicContributorsRequest) returns (ListPublicContributorsResponse);
+    rpc GetContributorProfile(GetContributorProfileRequest) returns (ContributorProfileFull);
+    rpc UpsertContributorProfile(UpsertContributorProfileRequest) returns (ContributorProfile);
+    rpc SetContributorProfileLinks(SetContributorProfileLinksRequest) returns (Empty);
+    rpc SetContributorProfileFields(SetContributorProfileFieldsRequest) returns (Empty);
 
     // --- Managed servers ---
     rpc ListManagedServers(ListManagedServersRequest) returns (ListManagedServersResponse);
@@ -1482,6 +1486,33 @@ message RemoveContributorMemberRequest {
 message ListPublicContributorsRequest {}
 message ListPublicContributorsResponse {
     repeated ContributorRoleWithMembers roles = 1;
+}
+message GetContributorProfileRequest {
+    string slug = 1;
+    int32 staff_account_id = 2;
+    string player_uuid = 3;
+}
+message UpsertContributorProfileRequest {
+    ContributorProfile profile = 1;
+}
+message ContributorProfileLinkInput {
+    string link_type = 1;
+    string label = 2;
+    string url = 3;
+    int32 sort_order = 4;
+}
+message SetContributorProfileLinksRequest {
+    int32 profile_id = 1;
+    repeated ContributorProfileLinkInput links = 2;
+}
+message ContributorProfileFieldInput {
+    string field_key = 1;
+    string field_value = 2;
+    int32 sort_order = 3;
+}
+message SetContributorProfileFieldsRequest {
+    int32 profile_id = 1;
+    repeated ContributorProfileFieldInput fields = 2;
 }
 
 // --- Networks ---
