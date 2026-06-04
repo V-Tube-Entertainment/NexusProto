@@ -179,6 +179,7 @@ service NexusService {
     rpc UpdateContributorMember(UpdateContributorMemberRequest) returns (ContributorRoleMember);
     rpc RemoveContributorMember(RemoveContributorMemberRequest) returns (Empty);
     rpc SetContributorMemberSites(SetContributorMemberSitesRequest) returns (Empty);
+    rpc SetContributorMemberVisibility(SetContributorMemberVisibilityRequest) returns (Empty);
     rpc ListPublicContributors(ListPublicContributorsRequest) returns (ListPublicContributorsResponse);
     rpc GetContributorProfile(GetContributorProfileRequest) returns (ContributorProfileFull);
     rpc UpsertContributorProfile(UpsertContributorProfileRequest) returns (ContributorProfile);
@@ -1491,7 +1492,16 @@ message RemoveContributorMemberRequest {
 }
 message SetContributorMemberSitesRequest {
     int32 member_id = 1;
+    // Optional legacy form: bare site ids default to "show" visibility.
     repeated int64 site_ids = 2;
+    // Preferred: tuples of (site_id, "show"|"hide"). Replaces the entire set.
+    repeated ContributorMemberSiteVisibility site_visibilities = 3;
+}
+message SetContributorMemberVisibilityRequest {
+    int32 member_id = 1;
+    bool visible = 2;
+    // "auto", "show", or "hide". Empty defaults to "auto".
+    string global_visibility = 3;
 }
 message ListPublicContributorsRequest {
     // Same convention as ListContributorRolesRequest.site_filter.

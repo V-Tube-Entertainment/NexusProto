@@ -1110,10 +1110,24 @@ message ContributorRoleMember {
     google.protobuf.Timestamp created_at = 8;
     google.protobuf.Timestamp updated_at = 9;
     string profile_slug = 10;
-    // Extra sites this member shows up on, layered on top of the role's
-    // own site_id. /sites/<slug>/staff lists members where the role
-    // matches OR the site is in this list.
+    // Sites where this member is explicitly tagged. Effective listing is
+    // the union with the role's home site, modulated by site_visibilities.
     repeated int64 site_ids = 11;
+    // Master switch: false = hide on every public listing.
+    bool visible = 12;
+    // Three-state for /staff (the global team page):
+    //   "auto" (default) = show iff role has no site_id
+    //   "show"           = always include
+    //   "hide"           = never include
+    string global_visibility = 13;
+    // Per-site overrides. Each entry sets visibility for that site_id to
+    // "show" or "hide". Absent means "auto" (derive from role.site_id).
+    repeated ContributorMemberSiteVisibility site_visibilities = 14;
+}
+
+message ContributorMemberSiteVisibility {
+    int64 site_id = 1;
+    string visibility = 2; // "show" or "hide"
 }
 
 message ContributorRoleWithMembers {
