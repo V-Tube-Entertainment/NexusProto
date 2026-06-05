@@ -530,6 +530,7 @@ service NexusService {
     rpc RefreshModpack(RefreshModpackRequest) returns (Modpack);
     rpc ListModpackMods(ListModpackModsRequest) returns (ListModpackModsResponse);
     rpc ImportModpackModlist(ImportModpackModlistRequest) returns (ImportModpackModlistResponse);
+    rpc SetModpackSites(SetModpackSitesRequest) returns (SetModpackSitesResponse);
 
     // --- Homepage Widgets ---
     rpc CreateHomepageWidget(CreateHomepageWidgetRequest) returns (HomepageWidget);
@@ -2442,6 +2443,14 @@ message ImportModpackModlistRequest {
 }
 message ImportModpackModlistResponse {
     int32 imported_count = 1;
+}
+
+message SetModpackSitesRequest {
+    int64 modpack_id = 1;
+    repeated int64 site_ids = 2;
+}
+message SetModpackSitesResponse {
+    repeated int64 site_ids = 1;
 }
 
 // --- Homepage Widgets ---

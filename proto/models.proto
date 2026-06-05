@@ -1201,6 +1201,7 @@ message Modpack {
     int32 sort_order = 9;
     string loader = 19;                // "fabric" | "forge" | "neoforge" — staff-set
     string mc_version = 20;            // e.g. "1.21.1" — staff-set
+    repeated int64 site_ids = 21;      // sites this modpack is visible on (many-to-many)
     // Synced from CurseForge (read-only via API):
     string cf_name = 10;
     string cf_summary = 11;
