@@ -653,6 +653,7 @@ service NexusService {
     rpc ListChangelogEntryVersions(ListChangelogEntryVersionsRequest) returns (ListChangelogEntryVersionsResponse);
     rpc ListChangelogArchiveBuckets(ListChangelogArchiveBucketsRequest) returns (ListChangelogArchiveBucketsResponse);
     rpc SearchChangelogEntries(SearchChangelogEntriesRequest) returns (ListChangelogEntriesResponse);
+    rpc CountSitePageviewsByPaths(CountSitePageviewsByPathsRequest) returns (CountSitePageviewsByPathsResponse);
     rpc ListChangelogEntryItems(ListChangelogEntryItemsRequest) returns (ListChangelogEntryItemsResponse);
     rpc SetChangelogEntryItems(SetChangelogEntryItemsRequest) returns (ListChangelogEntryItemsResponse);
     rpc ClaimChangelogEntryLock(ClaimChangelogEntryLockRequest) returns (ChangelogEntryLock);
@@ -2571,6 +2572,16 @@ message ListChangelogArchiveBucketsRequest { int64 site_id = 1; }
 message ChangelogArchiveBucket { int32 year = 1; int32 month = 2; int64 count = 3; }
 message ListChangelogArchiveBucketsResponse { repeated ChangelogArchiveBucket buckets = 1; }
 message SearchChangelogEntriesRequest { int64 site_id = 1; string query = 2; bool published_only = 3; int32 page_size = 4; }
+// Batch pageview counts for a fixed set of paths within a rolling window.
+// Used by the changelog dashboard to render a per-entry "Views (Nd)" column
+// without N+1 queries. Paths not present in the response had zero views.
+message CountSitePageviewsByPathsRequest {
+    int64 site_id = 1;
+    repeated string paths = 2;
+    int32 days = 3;
+}
+message SitePageviewPathCount { string path = 1; int64 views = 2; }
+message CountSitePageviewsByPathsResponse { repeated SitePageviewPathCount counts = 1; }
 message ListChangelogEntryItemsRequest { int64 entry_id = 1; }
 message ListChangelogEntryItemsResponse { repeated ChangelogEntryItem items = 1; }
 // Replaces the full item list for an entry; server reassigns ids if needed.
