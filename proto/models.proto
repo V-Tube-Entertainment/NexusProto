@@ -1866,6 +1866,98 @@ message BlogPostLock {
 }
 
 // ============================================================
+// Changelog
+// ============================================================
+//
+// First-class release/patch notes per site. Mirrors the Blog model (versioning,
+// autosave, edit-lock, scheduled publish) so the dashboard and renderer can
+// share patterns. Each entry has a structured K-a-C item list (ChangelogEntryItem)
+// plus an optional long-form block-tree body. `layout` on settings controls the
+// public renderer (vertical timeline, per-version pages, or event-recap feed).
+
+message ChangelogSettings {
+    int64 site_id = 1;
+    int64 subsite_id = 2;
+    bool enabled = 3;
+    string path_prefix = 4;
+    int32 entries_per_page = 5;
+    bool feed_enabled = 6;
+    string feed_title = 7;
+    // "TIMELINE" | "RELEASE_PAGES" | "EVENT_RECAP". Empty => "TIMELINE".
+    string layout = 8;
+    bool allow_comments = 9;
+    string settings_json = 10;
+    google.protobuf.Timestamp created_at = 11;
+    google.protobuf.Timestamp updated_at = 12;
+}
+
+// One release / changelog entry. `version` is the site-unique tag the public
+// route slug is built from (e.g. "v2.4.1"). `released_at` is the human-facing
+// release date (may differ from `published_at`, which is when it first went
+// live in Nexus). `publish_at` is the scheduled fire time when status=SCHEDULED.
+message ChangelogEntry {
+    int64 id = 1;
+    int64 site_id = 2;
+    string author_uuid = 3;
+    string version = 4;
+    string title = 5;
+    string summary = 6;
+    int64 hero_asset_id = 7;
+    string status = 8;
+    string draft_json = 9;
+    string published_json = 10;
+    int32 current_version = 11;
+    google.protobuf.Timestamp released_at = 12;
+    google.protobuf.Timestamp publish_at = 13;
+    google.protobuf.Timestamp published_at = 14;
+    google.protobuf.Timestamp unpublish_at = 15;
+    bool allow_comments = 16;
+    string meta_title = 17;
+    string meta_description = 18;
+    int64 og_image_asset_id = 19;
+    string canonical_url = 20;
+    bool noindex = 21;
+    string locale = 22;
+    google.protobuf.Timestamp created_at = 23;
+    google.protobuf.Timestamp updated_at = 24;
+}
+
+// Keep-a-Changelog typed line item. `category` is one of
+// ADDED | CHANGED | DEPRECATED | REMOVED | FIXED | SECURITY.
+message ChangelogEntryItem {
+    int64 id = 1;
+    int64 entry_id = 2;
+    string category = 3;
+    int32 order_index = 4;
+    string body_md = 5;
+}
+
+message ChangelogEntryVersion {
+    int64 id = 1;
+    int64 entry_id = 2;
+    int32 version_number = 3;
+    string document_json = 4;
+    string published_by_uuid = 5;
+    google.protobuf.Timestamp published_at = 6;
+}
+
+message ChangelogEntryAutosave {
+    int64 id = 1;
+    int64 entry_id = 2;
+    string draft_json = 3;
+    string created_by_uuid = 4;
+    google.protobuf.Timestamp created_at = 5;
+}
+
+message ChangelogEntryLock {
+    int64 entry_id = 1;
+    string holder_uuid = 2;
+    string holder_name = 3;
+    google.protobuf.Timestamp claimed_at = 4;
+    google.protobuf.Timestamp expires_at = 5;
+}
+
+// ============================================================
 // Content taxonomy (shared wiki + blog)
 // ============================================================
 

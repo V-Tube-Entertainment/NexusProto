@@ -639,6 +639,25 @@ service NexusService {
     rpc ReleaseBlogPostLock(ReleaseBlogPostLockRequest) returns (Empty);
     rpc GetBlogPostLock(GetBlogPostLockRequest) returns (BlogPostLock);
 
+    // --- Changelog ---
+    rpc GetChangelogSettings(GetChangelogSettingsRequest) returns (ChangelogSettings);
+    rpc UpsertChangelogSettings(UpsertChangelogSettingsRequest) returns (ChangelogSettings);
+    rpc ListChangelogEntries(ListChangelogEntriesRequest) returns (ListChangelogEntriesResponse);
+    rpc GetChangelogEntry(GetChangelogEntryRequest) returns (ChangelogEntry);
+    rpc CreateChangelogEntry(CreateChangelogEntryRequest) returns (ChangelogEntry);
+    rpc UpdateChangelogEntryMeta(UpdateChangelogEntryMetaRequest) returns (ChangelogEntry);
+    rpc DeleteChangelogEntry(DeleteChangelogEntryRequest) returns (Empty);
+    rpc UpdateChangelogEntryDraft(UpdateChangelogEntryDraftRequest) returns (ChangelogEntry);
+    rpc PublishChangelogEntry(PublishChangelogEntryRequest) returns (ChangelogEntry);
+    rpc ScheduleChangelogEntry(ScheduleChangelogEntryRequest) returns (ChangelogEntry);
+    rpc ListChangelogEntryVersions(ListChangelogEntryVersionsRequest) returns (ListChangelogEntryVersionsResponse);
+    rpc ListChangelogArchiveBuckets(ListChangelogArchiveBucketsRequest) returns (ListChangelogArchiveBucketsResponse);
+    rpc ListChangelogEntryItems(ListChangelogEntryItemsRequest) returns (ListChangelogEntryItemsResponse);
+    rpc SetChangelogEntryItems(SetChangelogEntryItemsRequest) returns (ListChangelogEntryItemsResponse);
+    rpc ClaimChangelogEntryLock(ClaimChangelogEntryLockRequest) returns (ChangelogEntryLock);
+    rpc ReleaseChangelogEntryLock(ReleaseChangelogEntryLockRequest) returns (Empty);
+    rpc GetChangelogEntryLock(GetChangelogEntryLockRequest) returns (ChangelogEntryLock);
+
     // --- Content taxonomy (shared wiki + blog) ---
     rpc ListContentCategories(ListContentCategoriesRequest) returns (ListContentCategoriesResponse);
     rpc CreateContentCategory(CreateContentCategoryRequest) returns (ContentCategory);
@@ -2520,6 +2539,43 @@ message SearchBlogPostsRequest { int64 site_id = 1; string query = 2; bool publi
 message ClaimBlogPostLockRequest { int64 post_id = 1; string holder_name = 2; }
 message ReleaseBlogPostLockRequest { int64 post_id = 1; }
 message GetBlogPostLockRequest { int64 post_id = 1; }
+
+// --- Changelog ---
+message GetChangelogSettingsRequest { int64 site_id = 1; }
+message UpsertChangelogSettingsRequest { ChangelogSettings settings = 1; }
+// Filters: status_filter ("DRAFT"/"PUBLISHED"/"SCHEDULED"/"ARCHIVED"; empty=all).
+// published_only is the public path shortcut. year+month bound released_at for archives.
+message ListChangelogEntriesRequest {
+    int64 site_id = 1;
+    string status_filter = 2;
+    string author_uuid = 3;
+    int32 year = 4;
+    int32 month = 5;
+    bool published_only = 6;
+    int32 page_size = 7;
+    string page_token = 8;
+}
+message ListChangelogEntriesResponse { repeated ChangelogEntry entries = 1; string next_page_token = 2; int32 total_count = 3; }
+// Resolve by id (preferred) or (site_id, version) for the public renderer.
+message GetChangelogEntryRequest { int64 id = 1; int64 site_id = 2; string version = 3; }
+message CreateChangelogEntryRequest { ChangelogEntry entry = 1; }
+message UpdateChangelogEntryMetaRequest { ChangelogEntry entry = 1; }
+message DeleteChangelogEntryRequest { int64 id = 1; }
+message UpdateChangelogEntryDraftRequest { int64 entry_id = 1; string draft_json = 2; bool force_unlock = 3; }
+message PublishChangelogEntryRequest { int64 entry_id = 1; }
+message ScheduleChangelogEntryRequest { int64 entry_id = 1; google.protobuf.Timestamp publish_at = 2; }
+message ListChangelogEntryVersionsRequest { int64 entry_id = 1; int32 page_size = 2; string page_token = 3; }
+message ListChangelogEntryVersionsResponse { repeated ChangelogEntryVersion versions = 1; string next_page_token = 2; }
+message ListChangelogArchiveBucketsRequest { int64 site_id = 1; }
+message ChangelogArchiveBucket { int32 year = 1; int32 month = 2; int64 count = 3; }
+message ListChangelogArchiveBucketsResponse { repeated ChangelogArchiveBucket buckets = 1; }
+message ListChangelogEntryItemsRequest { int64 entry_id = 1; }
+message ListChangelogEntryItemsResponse { repeated ChangelogEntryItem items = 1; }
+// Replaces the full item list for an entry; server reassigns ids if needed.
+message SetChangelogEntryItemsRequest { int64 entry_id = 1; repeated ChangelogEntryItem items = 2; }
+message ClaimChangelogEntryLockRequest { int64 entry_id = 1; string holder_name = 2; }
+message ReleaseChangelogEntryLockRequest { int64 entry_id = 1; }
+message GetChangelogEntryLockRequest { int64 entry_id = 1; }
 
 // --- Content taxonomy (shared wiki + blog) ---
 // kind is "WIKI" or "BLOG". target_kind on the maps mirrors `kind`.
