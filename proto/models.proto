@@ -1199,6 +1199,8 @@ message Modpack {
     int64 site_id = 7;
     int64 subsite_id = 8;
     int32 sort_order = 9;
+    string loader = 19;                // "fabric" | "forge" | "neoforge" — staff-set
+    string mc_version = 20;            // e.g. "1.21.1" — staff-set
     // Synced from CurseForge (read-only via API):
     string cf_name = 10;
     string cf_summary = 11;
@@ -1209,6 +1211,17 @@ message Modpack {
     google.protobuf.Timestamp cf_last_updated = 16;
     google.protobuf.Timestamp synced_at = 17;
     google.protobuf.Timestamp created_at = 18;
+}
+
+// A single entry in a Modpack's mod list, imported from a CurseForge
+// modlist.html export.
+message ModpackMod {
+    int64 id = 1;
+    int64 modpack_id = 2;
+    string name = 3;
+    string source_url = 4;
+    int32 sort_order = 5;
+    google.protobuf.Timestamp created_at = 6;
 }
 
 // ============================================================

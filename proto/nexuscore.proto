@@ -528,6 +528,8 @@ service NexusService {
     rpc GetModpack(GetModpackRequest) returns (Modpack);
     rpc ListModpacks(ListModpacksRequest) returns (ListModpacksResponse);
     rpc RefreshModpack(RefreshModpackRequest) returns (Modpack);
+    rpc ListModpackMods(ListModpackModsRequest) returns (ListModpackModsResponse);
+    rpc ImportModpackModlist(ImportModpackModlistRequest) returns (ImportModpackModlistResponse);
 
     // --- Homepage Widgets ---
     rpc CreateHomepageWidget(CreateHomepageWidgetRequest) returns (HomepageWidget);
@@ -2426,6 +2428,21 @@ message ListModpacksResponse {
     int32 total_count = 3;
 }
 message RefreshModpackRequest { int64 id = 1; }
+
+message ListModpackModsRequest {
+    int64 modpack_id = 1;
+}
+message ListModpackModsResponse {
+    repeated ModpackMod mods = 1;
+}
+message ImportModpackModlistRequest {
+    int64 modpack_id = 1;
+    // Raw modlist.html bytes as exported by the CurseForge desktop app.
+    bytes html = 2;
+}
+message ImportModpackModlistResponse {
+    int32 imported_count = 1;
+}
 
 // --- Homepage Widgets ---
 message CreateHomepageWidgetRequest { HomepageWidget widget = 1; }
