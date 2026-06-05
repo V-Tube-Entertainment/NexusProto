@@ -1920,6 +1920,11 @@ message ChangelogEntry {
     string locale = 22;
     google.protobuf.Timestamp created_at = 23;
     google.protobuf.Timestamp updated_at = 24;
+    // v2 polish: release channel ("stable" | "beta" | "nightly" | custom)
+    // and structured migration notes (markdown) shown as a callout above
+    // the K-a-C item list. Both backed by columns added in migration 084.
+    string channel = 25;
+    string migration_notes = 26;
 }
 
 // Keep-a-Changelog typed line item. `category` is one of

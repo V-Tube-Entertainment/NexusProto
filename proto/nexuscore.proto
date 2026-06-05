@@ -654,6 +654,7 @@ service NexusService {
     rpc ListChangelogArchiveBuckets(ListChangelogArchiveBucketsRequest) returns (ListChangelogArchiveBucketsResponse);
     rpc SearchChangelogEntries(SearchChangelogEntriesRequest) returns (ListChangelogEntriesResponse);
     rpc CountSitePageviewsByPaths(CountSitePageviewsByPathsRequest) returns (CountSitePageviewsByPathsResponse);
+    rpc SetChangelogEntryUnlisted(SetChangelogEntryUnlistedRequest) returns (ChangelogEntry);
     rpc ListChangelogEntryItems(ListChangelogEntryItemsRequest) returns (ListChangelogEntryItemsResponse);
     rpc SetChangelogEntryItems(SetChangelogEntryItemsRequest) returns (ListChangelogEntryItemsResponse);
     rpc ClaimChangelogEntryLock(ClaimChangelogEntryLockRequest) returns (ChangelogEntryLock);
@@ -2556,6 +2557,8 @@ message ListChangelogEntriesRequest {
     bool published_only = 6;
     int32 page_size = 7;
     string page_token = 8;
+    // Empty = no filter. Backend matches case-insensitively.
+    string channel = 9;
 }
 message ListChangelogEntriesResponse { repeated ChangelogEntry entries = 1; string next_page_token = 2; int32 total_count = 3; }
 // Resolve by id (preferred) or (site_id, version) for the public renderer.
@@ -2582,6 +2585,10 @@ message CountSitePageviewsByPathsRequest {
 }
 message SitePageviewPathCount { string path = 1; int64 views = 2; }
 message CountSitePageviewsByPathsResponse { repeated SitePageviewPathCount counts = 1; }
+// Toggle an already-PUBLISHED entry between PUBLISHED and UNLISTED. Unlisted
+// entries resolve by direct URL but are hidden from the public index, RSS,
+// and the "What's New" drawer.
+message SetChangelogEntryUnlistedRequest { int64 entry_id = 1; bool unlisted = 2; }
 message ListChangelogEntryItemsRequest { int64 entry_id = 1; }
 message ListChangelogEntryItemsResponse { repeated ChangelogEntryItem items = 1; }
 // Replaces the full item list for an entry; server reassigns ids if needed.
