@@ -420,6 +420,10 @@ service NexusService {
     // chunks carry raw bytes. Server replies with the created SiteAsset row when
     // the stream closes successfully. Caller must have sites.manage.
     rpc UploadSiteAsset(stream UploadSiteAssetChunk) returns (SiteAsset);
+    // Streaming upload for staff-bio images (avatar, hero, inline). Same shape
+    // as UploadSiteAsset. Allowed when actor owns the target ContributorProfile
+    // or has contributors.manage.
+    rpc UploadContributorAsset(stream UploadContributorAssetChunk) returns (ContributorAsset);
     rpc ListLeaderboardConfigs(ListLeaderboardConfigsRequest) returns (ListLeaderboardConfigsResponse);
     rpc CreateLeaderboardConfig(CreateLeaderboardConfigRequest) returns (LeaderboardConfig);
     rpc UpdateLeaderboardConfig(UpdateLeaderboardConfigRequest) returns (LeaderboardConfig);
@@ -3014,6 +3018,24 @@ message UploadSiteAssetHeader {
 message UploadSiteAssetChunk {
     oneof payload {
         UploadSiteAssetHeader header = 1;
+        bytes data = 2;
+    }
+}
+
+// --- Contributor (staff bio) Asset Uploads ---
+message UploadContributorAssetHeader {
+    int32 profile_id = 1;
+    string kind = 2;             // AVATAR | HERO | INLINE
+    string name = 3;
+    string mime_type = 4;
+    string alt_text = 5;
+    int32 width = 6;
+    int32 height = 7;
+    string filename = 8;
+}
+message UploadContributorAssetChunk {
+    oneof payload {
+        UploadContributorAssetHeader header = 1;
         bytes data = 2;
     }
 }
