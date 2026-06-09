@@ -416,6 +416,16 @@ service NexusService {
     rpc ListActiveSiteAnnouncements(ListActiveSiteAnnouncementsRequest) returns (ListSiteAnnouncementsResponse);
     rpc UpsertSiteAnnouncement(UpsertSiteAnnouncementRequest) returns (SiteAnnouncement);
     rpc DeleteSiteAnnouncement(DeleteSiteAnnouncementRequest) returns (Empty);
+    // Named, page-targeted site sidebars. List/Upsert/Delete are admin-scoped;
+    // ResolveSidebarsForPage is the public read path used by SiteChrome to
+    // pick which sidebars render on a non-home page.
+    rpc ListSiteSidebars(ListSiteSidebarsRequest) returns (ListSiteSidebarsResponse);
+    rpc GetSiteSidebar(GetSiteSidebarRequest) returns (SiteSidebar);
+    rpc UpsertSiteSidebar(UpsertSiteSidebarRequest) returns (SiteSidebar);
+    rpc DeleteSiteSidebar(DeleteSiteSidebarRequest) returns (Empty);
+    rpc ListSiteSidebarAssignments(ListSiteSidebarAssignmentsRequest) returns (ListSiteSidebarAssignmentsResponse);
+    rpc SetSiteSidebarAssignments(SetSiteSidebarAssignmentsRequest) returns (ListSiteSidebarAssignmentsResponse);
+    rpc ResolveSidebarsForPage(ResolveSidebarsForPageRequest) returns (ListSiteSidebarsResponse);
     // Streaming upload. First chunk MUST carry a UploadSiteAssetHeader; subsequent
     // chunks carry raw bytes. Server replies with the created SiteAsset row when
     // the stream closes successfully. Caller must have sites.manage.
@@ -2949,6 +2959,44 @@ message UpsertSiteAnnouncementRequest {
 }
 message DeleteSiteAnnouncementRequest {
     int64 id = 1;
+}
+
+// --- Site Sidebars ---
+// Named, page-targeted columns of block content rendered alongside main
+// content. List/Upsert/Delete + assignment management are admin-scoped;
+// ResolveSidebarsForPage is the public read path.
+message ListSiteSidebarsRequest {
+    int64 site_id = 1;
+}
+message ListSiteSidebarsResponse {
+    repeated SiteSidebar sidebars = 1;
+}
+message GetSiteSidebarRequest {
+    int64 id = 1;          // either id...
+    int64 site_id = 2;     // ...or (site_id, slug)
+    string slug = 3;
+}
+message UpsertSiteSidebarRequest {
+    SiteSidebar sidebar = 1;
+}
+message DeleteSiteSidebarRequest {
+    int64 id = 1;
+}
+message ListSiteSidebarAssignmentsRequest {
+    int64 site_id = 1;
+}
+message ListSiteSidebarAssignmentsResponse {
+    repeated SiteSidebarAssignment assignments = 1;
+}
+message SetSiteSidebarAssignmentsRequest {
+    int64 site_id = 1;
+    int64 sidebar_id = 2;                              // replaces all rows for this sidebar within the site
+    repeated SiteSidebarAssignment assignments = 3;    // sidebar_id field on each row is ignored — set from request
+}
+message ResolveSidebarsForPageRequest {
+    int64 site_id = 1;
+    string page_type = 2;     // HOME|BLOG|BLOG_POST|WIKI|WIKI_ARTICLE|CHANGELOG|CHANGELOG_ENTRY|STAFF|MODS|SUBSITE
+    string target_ref = 3;    // empty = page-type default
 }
 
 // --- Site Document Workflow ---

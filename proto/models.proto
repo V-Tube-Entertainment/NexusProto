@@ -1499,6 +1499,9 @@ message SiteRenderSnapshot {
     int64 document_og_image_asset_id = 11;
     string document_canonical_url = 12;
     bool document_noindex = 13;
+    // Resolved sidebars for the home page. Non-home routes call
+    // ResolveSidebarsForPage separately so this stays a one-RPC home path.
+    repeated SiteSidebar sidebars = 14;
 }
 
 message SubsiteRenderSnapshot {
@@ -1732,6 +1735,40 @@ message SiteAnnouncement {
     string updated_by_uuid = 15;
     google.protobuf.Timestamp created_at = 16;
     google.protobuf.Timestamp updated_at = 17;
+}
+
+// SiteSidebar is a named, page-targeted column of block content rendered
+// alongside the main content of a public site page. document_json reuses
+// the same block-document schema as the homepage body.
+message SiteSidebar {
+    int64 id = 1;
+    int64 site_id = 2;
+    string slug = 3;
+    string name = 4;
+    string document_json = 5;
+    string side = 6;             // LEFT | RIGHT
+    string width = 7;            // NARROW | MEDIUM | WIDE
+    bool sticky = 8;
+    string mobile_behavior = 9;  // HIDDEN | BELOW
+    bool enabled = 10;
+    string created_by_uuid = 11;
+    string updated_by_uuid = 12;
+    google.protobuf.Timestamp created_at = 13;
+    google.protobuf.Timestamp updated_at = 14;
+}
+
+// SiteSidebarAssignment links a sidebar to a page (or set of pages).
+// sidebar_id = 0 is a HIDE override: it suppresses the page-type default
+// for the matching target without adding a replacement. target_ref empty
+// means "page-type default"; non-empty is a specific page override.
+message SiteSidebarAssignment {
+    int64 id = 1;
+    int64 site_id = 2;
+    int64 sidebar_id = 3;        // 0 = HIDE override
+    string page_type = 4;        // HOME|BLOG|BLOG_POST|WIKI|WIKI_ARTICLE|CHANGELOG|CHANGELOG_ENTRY|STAFF|MODS|SUBSITE|ALL
+    string target_ref = 5;
+    int32 priority = 6;
+    google.protobuf.Timestamp created_at = 7;
 }
 
 // ============================================================
