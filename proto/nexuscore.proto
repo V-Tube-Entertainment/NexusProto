@@ -595,8 +595,142 @@ service NexusService {
     rpc SubmitMetricDatapoint(SubmitMetricDatapointRequest) returns (MetricDatapoint);
     rpc ListMetricDatapoints(ListMetricDatapointsRequest) returns (ListMetricDatapointsResponse);
     rpc BatchSubmitMetricDatapoints(BatchSubmitMetricDatapointsRequest) returns (BatchSubmitMetricDatapointsResponse);
+    // Deprecated: legacy plugin API. Use PublishPluginEvent instead — same
+    // semantics, plus permission gating, headers, and global/network scoping.
+    // EmitCustomEvent now routes through the same EventBus channel scheme so
+    // older plugins still deliver events; new code should not call this.
     rpc EmitCustomEvent(CustomEventRequest) returns (Empty);
     rpc RegisterCustomPermission(RegisterPermissionRequest) returns (Empty);
+
+    // --- Plugin Event Bus (Phase 1A) ---
+    // Publishes a typed plugin event to the Redis-backed bus. Subscribers
+    // receive it through the existing NexusRedisSubscriber pattern
+    // (`nexus:global:plugin.<topic>` or `nexus:<network_id>:plugin.<topic>`).
+    rpc PublishPluginEvent(PublishPluginEventRequest) returns (Empty);
+
+    // --- Teams (Phase 1B) ---
+    rpc CreateTeam(CreateTeamRequest) returns (Team);
+    rpc UpdateTeam(UpdateTeamRequest) returns (Team);
+    rpc DisbandTeam(DisbandTeamRequest) returns (Empty);
+    rpc GetTeam(GetTeamRequest) returns (Team);
+    rpc ListTeams(ListTeamsRequest) returns (ListTeamsResponse);
+    rpc GetTeamForPlayer(GetTeamForPlayerRequest) returns (Team);
+    rpc AddTeamMember(AddTeamMemberRequest) returns (TeamMember);
+    rpc RemoveTeamMember(RemoveTeamMemberRequest) returns (Empty);
+    rpc UpdateTeamMemberRole(UpdateTeamMemberRoleRequest) returns (TeamMember);
+    rpc ListTeamMembers(ListTeamMembersRequest) returns (ListTeamMembersResponse);
+
+    // --- Matches (Phase 2A) ---
+    rpc CreateMatch(CreateMatchRequest) returns (Match);
+    rpc UpdateMatch(UpdateMatchRequest) returns (Match);
+    rpc StartMatch(StartMatchRequest) returns (Match);
+    rpc EndMatch(EndMatchRequest) returns (Match);
+    rpc CancelMatch(CancelMatchRequest) returns (Match);
+    rpc GetMatch(GetMatchRequest) returns (Match);
+    rpc ListMatches(ListMatchesRequest) returns (ListMatchesResponse);
+    rpc AddMatchParticipant(AddMatchParticipantRequest) returns (MatchParticipant);
+    rpc RemoveMatchParticipant(RemoveMatchParticipantRequest) returns (Empty);
+    rpc UpdateMatchParticipant(UpdateMatchParticipantRequest) returns (MatchParticipant);
+    rpc ListMatchParticipants(ListMatchParticipantsRequest) returns (ListMatchParticipantsResponse);
+    rpc RecordMatchEvent(RecordMatchEventRequest) returns (MatchEvent);
+    rpc ListMatchEvents(ListMatchEventsRequest) returns (ListMatchEventsResponse);
+
+    // --- Arenas (Phase 2B) ---
+    rpc CreateArena(CreateArenaRequest) returns (Arena);
+    rpc UpdateArena(UpdateArenaRequest) returns (Arena);
+    rpc DeleteArena(DeleteArenaRequest) returns (Empty);
+    rpc GetArena(GetArenaRequest) returns (Arena);
+    rpc ListArenas(ListArenasRequest) returns (ListArenasResponse);
+    rpc ReserveArena(ReserveArenaRequest) returns (ArenaReservation);
+    rpc ReleaseArena(ReleaseArenaRequest) returns (Empty);
+
+    // --- Player Transfers (Phase 2C) ---
+    // Best-effort batch transfer: validates each player, emits a player.send
+    // event for those that pass, and returns per-player results. Atomicity is
+    // best-effort — the proxy executes moves async.
+    rpc TransferPlayers(TransferPlayersRequest) returns (TransferPlayersResponse);
+    rpc ListTransferAudit(ListTransferAuditRequest) returns (ListTransferAuditResponse);
+
+    // --- Tournaments (Phase 3) ---
+    rpc CreateTournament(CreateTournamentRequest) returns (Tournament);
+    rpc UpdateTournament(UpdateTournamentRequest) returns (Tournament);
+    rpc GetTournament(GetTournamentRequest) returns (Tournament);
+    rpc ListTournaments(ListTournamentsRequest) returns (ListTournamentsResponse);
+    rpc OpenRegistration(OpenRegistrationRequest) returns (Tournament);
+    rpc CloseRegistration(CloseRegistrationRequest) returns (Tournament);
+    rpc RegisterEntrant(RegisterEntrantRequest) returns (TournamentEntrant);
+    rpc WithdrawEntrant(WithdrawEntrantRequest) returns (Empty);
+    rpc ListEntrants(ListEntrantsRequest) returns (ListEntrantsResponse);
+    rpc SeedEntrants(SeedEntrantsRequest) returns (ListEntrantsResponse);
+    rpc StartTournament(StartTournamentRequest) returns (Tournament);
+    rpc CancelTournament(CancelTournamentRequest) returns (Tournament);
+    rpc GetBracket(GetBracketRequest) returns (GetBracketResponse);
+    // AdvanceMatch records a match winner, advances the bracket, and creates
+    // the next round's match if both sides of the parent slot are settled.
+    rpc AdvanceMatch(AdvanceMatchRequest) returns (Tournament);
+    rpc GetStandings(GetStandingsRequest) returns (GetStandingsResponse);
+
+    // --- Cosmetics (Phase 4A) ---
+    rpc CreateCosmetic(CreateCosmeticRequest) returns (Cosmetic);
+    rpc UpdateCosmetic(UpdateCosmeticRequest) returns (Cosmetic);
+    rpc DeleteCosmetic(DeleteCosmeticRequest) returns (Empty);
+    rpc GetCosmetic(GetCosmeticRequest) returns (Cosmetic);
+    rpc ListCosmetics(ListCosmeticsRequest) returns (ListCosmeticsResponse);
+    rpc GrantCosmetic(GrantCosmeticRequest) returns (CosmeticGrant);
+    rpc RevokeCosmetic(RevokeCosmeticRequest) returns (Empty);
+    rpc ListPlayerCosmetics(ListPlayerCosmeticsRequest) returns (ListPlayerCosmeticsResponse);
+    rpc EquipCosmetic(EquipCosmeticRequest) returns (CosmeticEquipped);
+    rpc UnequipCosmetic(UnequipCosmeticRequest) returns (Empty);
+    rpc GetEquippedCosmetics(GetEquippedCosmeticsRequest) returns (GetEquippedCosmeticsResponse);
+
+    // --- Achievements (Phase 4B) ---
+    rpc CreateAchievement(CreateAchievementRequest) returns (AchievementDefinition);
+    rpc UpdateAchievement(UpdateAchievementRequest) returns (AchievementDefinition);
+    rpc DeleteAchievement(DeleteAchievementRequest) returns (Empty);
+    rpc GetAchievement(GetAchievementRequest) returns (AchievementDefinition);
+    rpc ListAchievements(ListAchievementsRequest) returns (ListAchievementsResponse);
+    rpc UnlockAchievement(UnlockAchievementRequest) returns (AchievementUnlock);
+    rpc SetAchievementProgress(SetAchievementProgressRequest) returns (AchievementProgress);
+    rpc GetPlayerAchievements(GetPlayerAchievementsRequest) returns (GetPlayerAchievementsResponse);
+
+    // --- Seasons (Phase 4C) ---
+    rpc CreateSeason(CreateSeasonRequest) returns (Season);
+    rpc UpdateSeason(UpdateSeasonRequest) returns (Season);
+    rpc DeleteSeason(DeleteSeasonRequest) returns (Empty);
+    rpc GetSeason(GetSeasonRequest) returns (Season);
+    rpc ListSeasons(ListSeasonsRequest) returns (ListSeasonsResponse);
+    rpc GetCurrentSeason(GetCurrentSeasonRequest) returns (Season);
+
+    // --- Rewards (Phase 4D) ---
+    rpc GrantReward(GrantRewardRequest) returns (RewardGrant);
+    rpc GetRewardGrant(GetRewardGrantRequest) returns (RewardGrant);
+    rpc ListRewardGrants(ListRewardGrantsRequest) returns (ListRewardGrantsResponse);
+
+    // --- Plugin Schedules (Phase 5A) ---
+    rpc CreatePluginSchedule(CreatePluginScheduleRequest) returns (PluginSchedule);
+    rpc CancelPluginSchedule(CancelPluginScheduleRequest) returns (PluginSchedule);
+    rpc ListPluginSchedules(ListPluginSchedulesRequest) returns (ListPluginSchedulesResponse);
+    rpc GetPluginSchedule(GetPluginScheduleRequest) returns (PluginSchedule);
+
+    // --- Stats (Phase 5B — read-side analytics over metric_datapoints) ---
+    rpc GetMetricTopN(GetMetricTopNRequest) returns (GetMetricTopNResponse);
+    rpc GetMetricSumOverWindow(GetMetricSumOverWindowRequest) returns (GetMetricSumOverWindowResponse);
+    rpc GetMetricPercentile(GetMetricPercentileRequest) returns (GetMetricPercentileResponse);
+
+    // --- Polls / Votes (Phase 5C) ---
+    rpc CreatePoll(CreatePollRequest) returns (Poll);
+    rpc UpdatePoll(UpdatePollRequest) returns (Poll);
+    rpc DeletePoll(DeletePollRequest) returns (Empty);
+    rpc GetPoll(GetPollRequest) returns (Poll);
+    rpc ListPolls(ListPollsRequest) returns (ListPollsResponse);
+    rpc CastVote(CastVoteRequest) returns (PollVote);
+    rpc GetPollResults(GetPollResultsRequest) returns (GetPollResultsResponse);
+
+    // --- Inventory Bridge (Phase 5D) ---
+    rpc SaveInventorySnapshot(SaveInventorySnapshotRequest) returns (InventorySnapshot);
+    rpc GetInventorySnapshot(GetInventorySnapshotRequest) returns (GetInventorySnapshotResponse);
+    rpc ListInventorySnapshots(ListInventorySnapshotsRequest) returns (ListInventorySnapshotsResponse);
+    rpc DeleteInventorySnapshot(DeleteInventorySnapshotRequest) returns (Empty);
 
     // --- Players ---
     rpc GetProfile(GetProfileRequest) returns (PlayerProfile);
@@ -3087,3 +3221,815 @@ message UploadContributorAssetChunk {
         bytes data = 2;
     }
 }
+
+// ============================================================
+// Plugin Event Bus (Phase 1A)
+// ============================================================
+
+message PublishPluginEventRequest {
+    // Topic identifier (e.g. "team.created", "tournament.match_ended", or
+    // "custom.tournamentcore.round_advanced"). Required.
+    string topic = 1;
+    // Empty => network-scoped using the caller's network. Set explicitly to a
+    // different network only when the caller has cross-network permission.
+    string network_id = 2;
+    // Empty => network-scoped (any server). Setting both server_name and
+    // network_id makes the event server-scoped.
+    string server_name = 3;
+    // Optional JSON payload. Subscribers receive this verbatim under "payload".
+    string payload_json = 4;
+    // Optional header map. Surfaced to subscribers under "headers".
+    map<string, string> headers = 5;
+    // When true, ignore network_id and broadcast to the `nexus:global:*`
+    // channel so every network sees the event.
+    bool global = 6;
+}
+
+// ============================================================
+// Teams (Phase 1B)
+// ============================================================
+
+message CreateTeamRequest {
+    string network_id = 1;
+    string name = 2;
+    string tag = 3;
+    string color = 4;
+    string icon_url = 5;
+    bool persistent = 6;
+    string metadata_json = 7;
+}
+
+message UpdateTeamRequest {
+    int64 id = 1;
+    // Only non-empty fields are applied (sparse update). To clear a field,
+    // set it to a single space; the service treats " " as "clear".
+    string name = 2;
+    string tag = 3;
+    string color = 4;
+    string icon_url = 5;
+    string metadata_json = 6;
+}
+
+message DisbandTeamRequest { int64 id = 1; }
+
+message GetTeamRequest { int64 id = 1; }
+
+message ListTeamsRequest {
+    string network_id = 1;
+    // Filter: PERSISTENT_ONLY | EPHEMERAL_ONLY | ALL (default ALL)
+    string scope = 2;
+    bool include_disbanded = 3;
+    int32 page_size = 4;
+    string page_token = 5;
+}
+
+message ListTeamsResponse {
+    repeated Team teams = 1;
+    string next_page_token = 2;
+    int32 total_count = 3;
+}
+
+message GetTeamForPlayerRequest {
+    string network_id = 1;
+    string player_uuid = 2;
+    bool persistent_only = 3;
+}
+
+message AddTeamMemberRequest {
+    int64 team_id = 1;
+    string player_uuid = 2;
+    string player_name = 3;
+    string role = 4;
+}
+
+message RemoveTeamMemberRequest {
+    int64 team_id = 1;
+    string player_uuid = 2;
+}
+
+message UpdateTeamMemberRoleRequest {
+    int64 team_id = 1;
+    string player_uuid = 2;
+    string role = 3;
+}
+
+message ListTeamMembersRequest {
+    int64 team_id = 1;
+    int32 page_size = 2;
+    string page_token = 3;
+}
+
+message ListTeamMembersResponse {
+    repeated TeamMember members = 1;
+    string next_page_token = 2;
+    int32 total_count = 3;
+}
+
+// ============================================================
+// Matches (Phase 2A)
+// ============================================================
+
+message CreateMatchRequest {
+    string network_id = 1;
+    int64 tournament_id = 2;
+    string format = 3;
+    int64 arena_id = 4;
+    string server_name = 5;
+    string metadata_json = 6;
+    google.protobuf.Timestamp scheduled_for = 7;
+}
+
+message UpdateMatchRequest {
+    int64 id = 1;
+    string format = 2;       // " " to clear (sparse update semantics — same as teams)
+    int64 arena_id = 3;      // -1 to clear (0 is "unassigned" — different from "no change")
+    string server_name = 4;
+    string score_json = 5;
+    string metadata_json = 6;
+    google.protobuf.Timestamp scheduled_for = 7;
+}
+
+message StartMatchRequest { int64 id = 1; }
+message EndMatchRequest {
+    int64 id = 1;
+    string score_json = 2;   // optional final score override
+    // Winner identification — required when the match is attached to a
+    // tournament so the bracket can auto-advance. Ignored for standalone
+    // matches.
+    int64 winner_team_id = 3;
+    string winner_player_uuid = 4;
+}
+message CancelMatchRequest {
+    int64 id = 1;
+    string reason = 2;
+}
+
+message GetMatchRequest { int64 id = 1; }
+
+message ListMatchesRequest {
+    string network_id = 1;
+    int64 tournament_id = 2;     // 0 = any
+    int64 arena_id = 3;          // 0 = any
+    string status = 4;           // empty = any
+    string player_uuid = 5;      // filter to matches the player participated in
+    int32 page_size = 6;
+    string page_token = 7;
+}
+
+message ListMatchesResponse {
+    repeated Match matches = 1;
+    string next_page_token = 2;
+    int32 total_count = 3;
+}
+
+message AddMatchParticipantRequest {
+    int64 match_id = 1;
+    int64 team_id = 2;
+    string player_uuid = 3;
+    string player_name = 4;
+    int32 seed = 5;
+}
+
+message RemoveMatchParticipantRequest {
+    int64 match_id = 1;
+    int64 team_id = 2;
+    string player_uuid = 3;
+}
+
+message UpdateMatchParticipantRequest {
+    int64 match_id = 1;
+    int64 team_id = 2;
+    string player_uuid = 3;
+    int32 placement = 4;
+    bool eliminated = 5;
+}
+
+message ListMatchParticipantsRequest {
+    int64 match_id = 1;
+    int32 page_size = 2;
+    string page_token = 3;
+}
+
+message ListMatchParticipantsResponse {
+    repeated MatchParticipant participants = 1;
+    string next_page_token = 2;
+    int32 total_count = 3;
+}
+
+message RecordMatchEventRequest {
+    int64 match_id = 1;
+    string event_type = 2;
+    string actor_uuid = 3;
+    string payload_json = 4;
+}
+
+message ListMatchEventsRequest {
+    int64 match_id = 1;
+    string event_type = 2;       // empty = all
+    int32 page_size = 3;
+    string page_token = 4;
+}
+
+message ListMatchEventsResponse {
+    repeated MatchEvent events = 1;
+    string next_page_token = 2;
+    int32 total_count = 3;
+}
+
+// ============================================================
+// Arenas (Phase 2B)
+// ============================================================
+
+message CreateArenaRequest {
+    string network_id = 1;
+    string server_name = 2;
+    string name = 3;
+    string bounds_json = 4;
+    string spawn_points_json = 5;
+    int32 capacity = 6;
+    string tags = 7;
+}
+
+message UpdateArenaRequest {
+    int64 id = 1;
+    string server_name = 2;
+    string name = 3;
+    string bounds_json = 4;
+    string spawn_points_json = 5;
+    int32 capacity = 6;     // -1 to leave unchanged; >=0 sets
+    string tags = 7;
+    string status = 8;
+}
+
+message DeleteArenaRequest { int64 id = 1; }
+message GetArenaRequest { int64 id = 1; }
+
+message ListArenasRequest {
+    string network_id = 1;
+    string server_name = 2;
+    string status = 3;       // empty = any
+    string tag = 4;          // filter by single tag (matches comma-separated list)
+    int32 page_size = 5;
+    string page_token = 6;
+}
+
+message ListArenasResponse {
+    repeated Arena arenas = 1;
+    string next_page_token = 2;
+    int32 total_count = 3;
+}
+
+message ReserveArenaRequest {
+    int64 arena_id = 1;
+    string holder_ref = 2;
+    int32 ttl_seconds = 3;       // <=0 defaults to 300
+}
+
+message ReleaseArenaRequest {
+    int64 arena_id = 1;
+    string holder_ref = 2;       // must match the reservation holder, or be empty for admin override
+}
+
+// ============================================================
+// Player Transfers (Phase 2C)
+// ============================================================
+
+message TransferPlayersRequest {
+    string network_id = 1;
+    repeated string player_uuids = 2;
+    string target_server = 3;
+    // When true, if any player fails validation no transfer events are emitted.
+    bool all_or_nothing = 4;
+    string reason = 5;       // recorded in audit log + event payload
+}
+
+message TransferPlayerResult {
+    string player_uuid = 1;
+    bool transferred = 2;
+    string error = 3;        // empty when transferred = true
+}
+
+message TransferPlayersResponse {
+    repeated TransferPlayerResult results = 1;
+    int32 succeeded = 2;
+    int32 failed = 3;
+}
+
+message ListTransferAuditRequest {
+    string network_id = 1;
+    string player_uuid = 2;
+    string target_server = 3;
+    int32 page_size = 4;
+    string page_token = 5;
+}
+
+message ListTransferAuditResponse {
+    repeated TransferAuditEntry entries = 1;
+    string next_page_token = 2;
+    int32 total_count = 3;
+}
+
+// ============================================================
+// Tournaments (Phase 3)
+// ============================================================
+
+message CreateTournamentRequest {
+    string network_id = 1;
+    string name = 2;
+    string format = 3;
+    string entry_kind = 4;
+    int32 max_entrants = 5;
+    string prize_pool_json = 6;
+    string metadata_json = 7;
+    google.protobuf.Timestamp registration_opens_at = 8;
+    google.protobuf.Timestamp registration_closes_at = 9;
+    google.protobuf.Timestamp starts_at = 10;
+}
+
+message UpdateTournamentRequest {
+    int64 id = 1;
+    string name = 2;
+    int32 max_entrants = 3;       // -1 = unchanged
+    string prize_pool_json = 4;
+    string metadata_json = 5;
+    google.protobuf.Timestamp registration_opens_at = 6;
+    google.protobuf.Timestamp registration_closes_at = 7;
+    google.protobuf.Timestamp starts_at = 8;
+}
+
+message GetTournamentRequest { int64 id = 1; }
+
+message ListTournamentsRequest {
+    string network_id = 1;
+    string status = 2;
+    int32 page_size = 3;
+    string page_token = 4;
+}
+
+message ListTournamentsResponse {
+    repeated Tournament tournaments = 1;
+    string next_page_token = 2;
+    int32 total_count = 3;
+}
+
+message OpenRegistrationRequest { int64 id = 1; }
+message CloseRegistrationRequest { int64 id = 1; }
+
+message RegisterEntrantRequest {
+    int64 tournament_id = 1;
+    int64 team_id = 2;
+    string player_uuid = 3;
+    string display_name = 4;
+    int32 seed = 5;
+}
+
+message WithdrawEntrantRequest {
+    int64 tournament_id = 1;
+    int64 team_id = 2;
+    string player_uuid = 3;
+}
+
+message ListEntrantsRequest {
+    int64 tournament_id = 1;
+    int32 page_size = 2;
+    string page_token = 3;
+}
+
+message ListEntrantsResponse {
+    repeated TournamentEntrant entrants = 1;
+    string next_page_token = 2;
+    int32 total_count = 3;
+}
+
+// SeedEntrants applies seeds in order. Modes:
+//   MANUAL  — uses the provided seed array (length must equal entrant count)
+//   RANDOM  — server randomizes
+//   ORDER   — uses registration order (1 = first to register)
+message SeedEntrantsRequest {
+    int64 tournament_id = 1;
+    string mode = 2;
+    // For MANUAL: parallel arrays keyed by (team_id, player_uuid)
+    repeated int64 team_ids = 3;
+    repeated string player_uuids = 4;
+    repeated int32 seeds = 5;
+}
+
+message StartTournamentRequest { int64 id = 1; }
+message CancelTournamentRequest { int64 id = 1; string reason = 2; }
+
+message GetBracketRequest { int64 tournament_id = 1; }
+message GetBracketResponse {
+    repeated BracketNode nodes = 1;
+    string format = 2;
+}
+
+message AdvanceMatchRequest {
+    int64 tournament_id = 1;
+    int64 match_id = 2;
+    int64 winner_team_id = 3;
+    string winner_player_uuid = 4;
+}
+
+message GetStandingsRequest { int64 tournament_id = 1; }
+
+message StandingsEntry {
+    int32 placement = 1;
+    int64 team_id = 2;
+    string player_uuid = 3;
+    string display_name = 4;
+    int32 wins = 5;
+    int32 losses = 6;
+    bool eliminated = 7;
+}
+
+message GetStandingsResponse {
+    repeated StandingsEntry entries = 1;
+}
+
+// ============================================================
+// Cosmetics (Phase 4A)
+// ============================================================
+
+message CreateCosmeticRequest {
+    string namespace = 1;
+    string key = 2;
+    string name = 3;
+    string kind = 4;
+    string icon_url = 5;
+    string color = 6;
+    string params_json = 7;
+}
+
+message UpdateCosmeticRequest {
+    int64 id = 1;
+    string name = 2;
+    string icon_url = 3;
+    string color = 4;
+    string params_json = 5;
+    int32 enabled = 6;       // -1 = unchanged, 0 = false, 1 = true
+}
+
+message DeleteCosmeticRequest { int64 id = 1; }
+message GetCosmeticRequest { int64 id = 1; }
+
+message ListCosmeticsRequest {
+    string namespace = 1;
+    string kind = 2;
+    bool include_disabled = 3;
+    int32 page_size = 4;
+    string page_token = 5;
+}
+
+message ListCosmeticsResponse {
+    repeated Cosmetic cosmetics = 1;
+    string next_page_token = 2;
+    int32 total_count = 3;
+}
+
+message GrantCosmeticRequest {
+    string player_uuid = 1;
+    int64 cosmetic_id = 2;
+    string source = 3;
+    int64 expires_in_seconds = 4;     // 0 = permanent
+}
+
+message RevokeCosmeticRequest {
+    string player_uuid = 1;
+    int64 cosmetic_id = 2;
+}
+
+message ListPlayerCosmeticsRequest {
+    string player_uuid = 1;
+    string kind = 2;
+    bool include_expired = 3;
+    int32 page_size = 4;
+    string page_token = 5;
+}
+
+message ListPlayerCosmeticsResponse {
+    repeated CosmeticGrant grants = 1;
+    string next_page_token = 2;
+    int32 total_count = 3;
+}
+
+message EquipCosmeticRequest {
+    string player_uuid = 1;
+    int64 cosmetic_id = 2;
+}
+
+message UnequipCosmeticRequest {
+    string player_uuid = 1;
+    string kind = 2;
+}
+
+message GetEquippedCosmeticsRequest {
+    string player_uuid = 1;
+}
+
+message GetEquippedCosmeticsResponse {
+    repeated CosmeticEquipped equipped = 1;
+}
+
+// ============================================================
+// Achievements (Phase 4B)
+// ============================================================
+
+message CreateAchievementRequest {
+    string namespace = 1;
+    string key = 2;
+    string name = 3;
+    string description = 4;
+    string icon_url = 5;
+    int32 points = 6;
+    bool hidden = 7;
+    string trigger_type = 8;
+    string trigger_config_json = 9;
+}
+
+message UpdateAchievementRequest {
+    int64 id = 1;
+    string name = 2;
+    string description = 3;
+    string icon_url = 4;
+    int32 points = 5;          // -1 = unchanged
+    string trigger_config_json = 6;
+    int32 enabled = 7;         // -1 = unchanged, 0 = false, 1 = true
+}
+
+message DeleteAchievementRequest { int64 id = 1; }
+message GetAchievementRequest { int64 id = 1; }
+
+message ListAchievementsRequest {
+    string namespace = 1;
+    bool include_disabled = 2;
+    bool include_hidden = 3;
+    int32 page_size = 4;
+    string page_token = 5;
+}
+
+message ListAchievementsResponse {
+    repeated AchievementDefinition achievements = 1;
+    string next_page_token = 2;
+    int32 total_count = 3;
+}
+
+message UnlockAchievementRequest {
+    string player_uuid = 1;
+    int64 achievement_id = 2;
+    string source = 3;
+}
+
+message SetAchievementProgressRequest {
+    string player_uuid = 1;
+    int64 achievement_id = 2;
+    int64 progress = 3;
+    int64 target = 4;
+    // When true and progress >= target, auto-unlock the achievement.
+    bool auto_unlock = 5;
+}
+
+message GetPlayerAchievementsRequest {
+    string player_uuid = 1;
+    bool include_locked = 2;
+}
+
+message GetPlayerAchievementsResponse {
+    repeated AchievementUnlock unlocks = 1;
+    repeated AchievementProgress progress = 2;
+}
+
+// ============================================================
+// Seasons (Phase 4C)
+// ============================================================
+
+message CreateSeasonRequest {
+    string network_id = 1;
+    string name = 2;
+    string scope_json = 3;
+    google.protobuf.Timestamp starts_at = 4;
+    google.protobuf.Timestamp ends_at = 5;
+}
+
+message UpdateSeasonRequest {
+    int64 id = 1;
+    string name = 2;
+    string scope_json = 3;
+    string status = 4;
+    google.protobuf.Timestamp starts_at = 5;
+    google.protobuf.Timestamp ends_at = 6;
+}
+
+message DeleteSeasonRequest { int64 id = 1; }
+message GetSeasonRequest { int64 id = 1; }
+
+message ListSeasonsRequest {
+    string network_id = 1;
+    string status = 2;
+    int32 page_size = 3;
+    string page_token = 4;
+}
+
+message ListSeasonsResponse {
+    repeated Season seasons = 1;
+    string next_page_token = 2;
+    int32 total_count = 3;
+}
+
+message GetCurrentSeasonRequest {
+    string network_id = 1;
+}
+
+// ============================================================
+// Rewards (Phase 4D)
+// ============================================================
+
+message GrantRewardRequest {
+    string player_uuid = 1;
+    string idempotency_key = 2;        // required; same key replays return prior grant
+    repeated RewardItem items = 3;
+    string source = 4;
+}
+
+message GetRewardGrantRequest { int64 id = 1; }
+
+message ListRewardGrantsRequest {
+    string player_uuid = 1;
+    int32 page_size = 2;
+    string page_token = 3;
+}
+
+message ListRewardGrantsResponse {
+    repeated RewardGrant grants = 1;
+    string next_page_token = 2;
+    int32 total_count = 3;
+}
+
+// ============================================================
+// Plugin Schedules (Phase 5A)
+// ============================================================
+
+message CreatePluginScheduleRequest {
+    string network_id = 1;
+    string namespace = 2;
+    string key = 3;
+    string topic = 4;
+    string payload_json = 5;
+    google.protobuf.Timestamp fire_at = 6;
+}
+
+message CancelPluginScheduleRequest { int64 id = 1; }
+message GetPluginScheduleRequest { int64 id = 1; }
+
+message ListPluginSchedulesRequest {
+    string network_id = 1;
+    string namespace = 2;
+    string status = 3;
+    int32 page_size = 4;
+    string page_token = 5;
+}
+
+message ListPluginSchedulesResponse {
+    repeated PluginSchedule schedules = 1;
+    string next_page_token = 2;
+    int32 total_count = 3;
+}
+
+// ============================================================
+// Stats (Phase 5B)
+// ============================================================
+
+message GetMetricTopNRequest {
+    string namespace = 1;
+    string metric_key = 2;
+    string network_id = 3;
+    string server_name = 4;
+    string aggregation = 5;       // SUM | MAX | MIN | AVG (defaults to SUM)
+    int32 limit = 6;              // capped at 100
+    google.protobuf.Timestamp since = 7;
+    google.protobuf.Timestamp until = 8;
+}
+
+message MetricTopEntry {
+    string player_uuid = 1;
+    string player_name = 2;
+    double value = 3;
+    int64 samples = 4;
+}
+
+message GetMetricTopNResponse {
+    repeated MetricTopEntry entries = 1;
+}
+
+message GetMetricSumOverWindowRequest {
+    string namespace = 1;
+    string metric_key = 2;
+    string network_id = 3;
+    string player_uuid = 4;       // empty = network-wide
+    google.protobuf.Timestamp since = 5;
+    google.protobuf.Timestamp until = 6;
+}
+
+message GetMetricSumOverWindowResponse {
+    double sum = 1;
+    int64 samples = 2;
+}
+
+message GetMetricPercentileRequest {
+    string namespace = 1;
+    string metric_key = 2;
+    string network_id = 3;
+    double percentile = 4;        // 0..1
+    google.protobuf.Timestamp since = 5;
+    google.protobuf.Timestamp until = 6;
+}
+
+message GetMetricPercentileResponse {
+    double value = 1;
+    int64 samples = 2;
+}
+
+// ============================================================
+// Polls / Votes (Phase 5C)
+// ============================================================
+
+message CreatePollRequest {
+    string network_id = 1;
+    string namespace = 2;
+    string key = 3;
+    string question = 4;
+    string options_json = 5;
+    bool multi_choice = 6;
+    google.protobuf.Timestamp opens_at = 7;
+    google.protobuf.Timestamp closes_at = 8;
+}
+
+message UpdatePollRequest {
+    int64 id = 1;
+    string question = 2;
+    string options_json = 3;
+    string status = 4;
+    google.protobuf.Timestamp opens_at = 5;
+    google.protobuf.Timestamp closes_at = 6;
+}
+
+message DeletePollRequest { int64 id = 1; }
+message GetPollRequest { int64 id = 1; }
+
+message ListPollsRequest {
+    string network_id = 1;
+    string namespace = 2;
+    string status = 3;
+    int32 page_size = 4;
+    string page_token = 5;
+}
+
+message ListPollsResponse {
+    repeated Poll polls = 1;
+    string next_page_token = 2;
+    int32 total_count = 3;
+}
+
+message CastVoteRequest {
+    int64 poll_id = 1;
+    string voter_uuid = 2;
+    string option_key = 3;
+}
+
+message GetPollResultsRequest { int64 poll_id = 1; }
+message GetPollResultsResponse {
+    int64 poll_id = 1;
+    repeated PollResultEntry results = 2;
+    int64 total_votes = 3;
+}
+
+// ============================================================
+// Inventory Bridge (Phase 5D)
+// ============================================================
+
+message SaveInventorySnapshotRequest {
+    string player_uuid = 1;
+    string kind = 2;
+    bytes payload = 3;            // raw bytes, max 1 MiB
+    string metadata_json = 4;
+}
+
+message GetInventorySnapshotRequest { int64 id = 1; }
+message GetInventorySnapshotResponse {
+    InventorySnapshot snapshot = 1;
+    bytes payload = 2;
+}
+
+message ListInventorySnapshotsRequest {
+    string player_uuid = 1;
+    string kind = 2;
+    int32 page_size = 3;
+    string page_token = 4;
+}
+
+message ListInventorySnapshotsResponse {
+    repeated InventorySnapshot snapshots = 1;
+    string next_page_token = 2;
+    int32 total_count = 3;
+}
+
+message DeleteInventorySnapshotRequest { int64 id = 1; }

@@ -2058,6 +2058,362 @@ message ContentTag {
 }
 
 // ============================================================
+// Teams (Phase 1B — persistent + ephemeral parties)
+// ============================================================
+
+message Team {
+    int64 id = 1;
+    string network_id = 2;
+    string name = 3;            // unique within network for persistent teams
+    string tag = 4;             // short display tag (e.g. "[RED]")
+    string color = 5;           // hex (#RRGGBB) or named color
+    string icon_url = 6;        // optional icon/banner
+    bool persistent = 7;        // false = ephemeral party
+    string metadata_json = 8;   // free-form for plugins
+    google.protobuf.Timestamp created_at = 9;
+    google.protobuf.Timestamp updated_at = 10;
+    bool disbanded = 11;
+    google.protobuf.Timestamp disbanded_at = 12;
+}
+
+message TeamMember {
+    int64 team_id = 1;
+    string player_uuid = 2;
+    string player_name = 3;
+    string role = 4;            // CAPTAIN | OFFICER | MEMBER (free-form, plugin-defined)
+    google.protobuf.Timestamp joined_at = 5;
+}
+
+// ============================================================
+// Matches (Phase 2A — generic match lifecycle)
+// ============================================================
+
+message Match {
+    int64 id = 1;
+    string network_id = 2;
+    int64 tournament_id = 3;     // 0 = standalone match
+    string format = 4;           // free-form: "FFA", "1V1", "TEAM_DEATHMATCH", ...
+    string status = 5;           // PENDING | ACTIVE | COMPLETED | CANCELLED
+    int64 arena_id = 6;          // 0 = unassigned
+    string server_name = 7;      // optional override; empty = derived from arena
+    string score_json = 8;       // free-form scores per side
+    string metadata_json = 9;
+    google.protobuf.Timestamp scheduled_for = 10;
+    google.protobuf.Timestamp started_at = 11;
+    google.protobuf.Timestamp ended_at = 12;
+    google.protobuf.Timestamp created_at = 13;
+    google.protobuf.Timestamp updated_at = 14;
+}
+
+message MatchParticipant {
+    int64 match_id = 1;
+    int64 team_id = 2;           // 0 if solo
+    string player_uuid = 3;      // empty if team-only
+    string player_name = 4;
+    int32 seed = 5;              // bracket seed (0 if unseeded)
+    int32 placement = 6;         // final placement (0 while ongoing)
+    google.protobuf.Timestamp eliminated_at = 7;
+    google.protobuf.Timestamp added_at = 8;
+}
+
+message MatchEvent {
+    int64 id = 1;
+    int64 match_id = 2;
+    string event_type = 3;       // free-form, plugin-defined (e.g. "kill", "objective")
+    string actor_uuid = 4;
+    string payload_json = 5;
+    google.protobuf.Timestamp recorded_at = 6;
+}
+
+// ============================================================
+// Arenas (Phase 2B — named, reservable play spaces)
+// ============================================================
+
+message Arena {
+    int64 id = 1;
+    string network_id = 2;
+    string server_name = 3;
+    string name = 4;
+    string bounds_json = 5;
+    string spawn_points_json = 6;
+    int32 capacity = 7;
+    string tags = 8;             // comma-separated tag list for filtering
+    string status = 9;           // AVAILABLE | RESERVED | DISABLED | MAINTENANCE
+    google.protobuf.Timestamp created_at = 10;
+    google.protobuf.Timestamp updated_at = 11;
+}
+
+message ArenaReservation {
+    int64 id = 1;
+    int64 arena_id = 2;
+    string holder_ref = 3;       // free-form caller key (match id, queue id, plugin tag)
+    google.protobuf.Timestamp reserved_at = 4;
+    google.protobuf.Timestamp expires_at = 5;
+}
+
+// ============================================================
+// Tournaments (Phase 3 — brackets, seeding, standings)
+// ============================================================
+
+message Tournament {
+    int64 id = 1;
+    string network_id = 2;
+    string name = 3;
+    string format = 4;            // SINGLE_ELIM | DOUBLE_ELIM | ROUND_ROBIN | SWISS
+    string entry_kind = 5;        // SOLO | TEAM
+    string status = 6;            // DRAFT | REGISTRATION | ACTIVE | COMPLETED | CANCELLED
+    int32 max_entrants = 7;       // 0 = unlimited
+    string prize_pool_json = 8;
+    string metadata_json = 9;
+    google.protobuf.Timestamp registration_opens_at = 10;
+    google.protobuf.Timestamp registration_closes_at = 11;
+    google.protobuf.Timestamp starts_at = 12;
+    google.protobuf.Timestamp ends_at = 13;
+    google.protobuf.Timestamp created_at = 14;
+    google.protobuf.Timestamp updated_at = 15;
+}
+
+message TournamentEntrant {
+    int64 tournament_id = 1;
+    int64 team_id = 2;            // 0 if solo
+    string player_uuid = 3;       // empty if team-only
+    string display_name = 4;
+    int32 seed = 5;               // 0 = unseeded
+    int32 placement = 6;          // 0 while still in
+    google.protobuf.Timestamp registered_at = 7;
+    google.protobuf.Timestamp eliminated_at = 8;
+}
+
+// BracketNode is one slot in a bracket. For single/double-elim it is one
+// matchup. Round-robin & swiss store rounds as a flat list of nodes keyed by
+// (round, slot).
+message BracketNode {
+    int64 id = 1;
+    int64 tournament_id = 2;
+    int32 round = 3;
+    int32 slot = 4;
+    string bracket = 5;          // WINNERS | LOSERS | FINAL (for double-elim); WINNERS for single
+    int64 match_id = 6;          // 0 until the match is created
+    int64 parent_node_id = 7;    // node this advances into
+    int64 entrant_a_team_id = 8;
+    string entrant_a_player_uuid = 9;
+    int64 entrant_b_team_id = 10;
+    string entrant_b_player_uuid = 11;
+    int64 winner_team_id = 12;
+    string winner_player_uuid = 13;
+    bool bye = 14;               // true if this slot auto-advances without a match
+    // For DOUBLE_ELIM winners-bracket nodes only: the losers-bracket node ID
+    // the loser of this match drops into. 0 for all other contexts.
+    int64 loser_drop_node_id = 15;
+}
+
+// ============================================================
+// Cosmetics (Phase 4A — tags, prefixes, titles, particles)
+// ============================================================
+
+message Cosmetic {
+    int64 id = 1;
+    string namespace = 2;        // free-form, e.g. "tournament", "donor"
+    string key = 3;
+    string name = 4;
+    string kind = 5;             // TAG | PREFIX | SUFFIX | TITLE | CHAT_COLOR | PARTICLE | NAME_COLOR
+    string icon_url = 6;
+    string color = 7;
+    string params_json = 8;      // free-form config (particle type, prefix text, etc.)
+    bool enabled = 9;
+    google.protobuf.Timestamp created_at = 10;
+    google.protobuf.Timestamp updated_at = 11;
+}
+
+message CosmeticGrant {
+    string player_uuid = 1;
+    int64 cosmetic_id = 2;
+    string source = 3;           // e.g. "tournament:42", "reward:abc", "manual"
+    google.protobuf.Timestamp granted_at = 4;
+    google.protobuf.Timestamp expires_at = 5;   // 0 = permanent
+}
+
+message CosmeticEquipped {
+    string player_uuid = 1;
+    string kind = 2;             // one cosmetic per kind at most
+    int64 cosmetic_id = 3;
+    google.protobuf.Timestamp equipped_at = 4;
+}
+
+// ============================================================
+// Achievements (Phase 4B — definitions, unlocks, progress)
+// ============================================================
+
+message AchievementDefinition {
+    int64 id = 1;
+    string namespace = 2;
+    string key = 3;
+    string name = 4;
+    string description = 5;
+    string icon_url = 6;
+    int32 points = 7;
+    bool hidden = 8;
+    string trigger_type = 9;     // METRIC_THRESHOLD | EVENT | MANUAL
+    string trigger_config_json = 10;
+    bool enabled = 11;
+    google.protobuf.Timestamp created_at = 12;
+    google.protobuf.Timestamp updated_at = 13;
+}
+
+message AchievementUnlock {
+    string player_uuid = 1;
+    int64 achievement_id = 2;
+    string source = 3;
+    google.protobuf.Timestamp unlocked_at = 4;
+}
+
+message AchievementProgress {
+    string player_uuid = 1;
+    int64 achievement_id = 2;
+    int64 progress = 3;
+    int64 target = 4;
+    google.protobuf.Timestamp updated_at = 5;
+}
+
+// ============================================================
+// Seasons (Phase 4C — time-scoped windows)
+// ============================================================
+
+message Season {
+    int64 id = 1;
+    string network_id = 2;
+    string name = 3;
+    string status = 4;           // UPCOMING | ACTIVE | ENDED
+    string scope_json = 5;       // free-form: which leaderboards/tournaments/achievements scope to this season
+    google.protobuf.Timestamp starts_at = 6;
+    google.protobuf.Timestamp ends_at = 7;
+    google.protobuf.Timestamp created_at = 8;
+    google.protobuf.Timestamp updated_at = 9;
+}
+
+// ============================================================
+// Rewards (Phase 4D — atomic multi-resource grants)
+// ============================================================
+
+// RewardItem is a single line item in a reward bundle.
+// Type drives how it's applied:
+//   CURRENCY     — amount of currency identified by key (currency code).
+//                  Applied authoritatively via EconomyService.ModifyBalance.
+//   COSMETIC     — grant cosmetic with id = key (numeric cosmetic id as string).
+//                  Applied authoritatively via CosmeticService.Grant.
+//   ACHIEVEMENT  — unlock achievement with id = key. Applied via AchievementService.Unlock.
+//   XP           — bare metric submission ("xp.<key>") of amount via MetricService.
+//   ITEM         — opaque in-game item id (key) of count (amount). Items are
+//                  inherently plugin-side: NexusCore publishes a "reward.item"
+//                  event on the EventBus and returns APPLIED, but the actual
+//                  in-game grant only happens if a plugin subscribes to
+//                  "reward.item" and acts on it. If you grant ITEM rewards
+//                  but no plugin handles the event, the bundle records as
+//                  APPLIED while the player receives nothing. Subscribe in
+//                  the platform plugin's enable() and ack receipt via
+//                  whatever audit trail you maintain.
+message RewardItem {
+    string type = 1;
+    string key = 2;
+    int64 amount = 3;
+    string metadata_json = 4;
+}
+
+message RewardGrant {
+    int64 id = 1;
+    string player_uuid = 2;
+    string idempotency_key = 3;
+    repeated RewardItem items = 4;
+    string status = 5;           // PENDING | APPLIED | PARTIAL | FAILED
+    string error = 6;
+    string source = 7;
+    google.protobuf.Timestamp granted_at = 8;
+    google.protobuf.Timestamp applied_at = 9;
+}
+
+// ============================================================
+// Plugin Schedules (Phase 5A — fire events at a future time)
+// ============================================================
+
+// PluginSchedule fires a payload onto the EventBus at the scheduled time.
+// Phase 5.0 supports one-shot schedules only (fire_at). Cron / recurring is
+// reserved for Phase 5.1.
+message PluginSchedule {
+    int64 id = 1;
+    string network_id = 2;
+    string namespace = 3;
+    string key = 4;              // plugin-defined identifier (e.g. "tournament-42-start")
+    string topic = 5;             // EventBus topic published on fire
+    string payload_json = 6;
+    google.protobuf.Timestamp fire_at = 7;
+    google.protobuf.Timestamp fired_at = 8;
+    string status = 9;            // PENDING | FIRED | CANCELLED | FAILED
+    string error = 10;
+    google.protobuf.Timestamp created_at = 11;
+    google.protobuf.Timestamp updated_at = 12;
+}
+
+// ============================================================
+// Polls / Votes (Phase 5C)
+// ============================================================
+
+message Poll {
+    int64 id = 1;
+    string network_id = 2;
+    string namespace = 3;
+    string key = 4;
+    string question = 5;
+    string options_json = 6;       // JSON array of {key, label} objects
+    bool multi_choice = 7;
+    string status = 8;             // DRAFT | OPEN | CLOSED
+    google.protobuf.Timestamp opens_at = 9;
+    google.protobuf.Timestamp closes_at = 10;
+    google.protobuf.Timestamp created_at = 11;
+    google.protobuf.Timestamp updated_at = 12;
+}
+
+message PollVote {
+    int64 poll_id = 1;
+    string voter_uuid = 2;
+    string option_key = 3;
+    google.protobuf.Timestamp voted_at = 4;
+}
+
+message PollResultEntry {
+    string option_key = 1;
+    int64 count = 2;
+}
+
+// ============================================================
+// Inventory Bridge (Phase 5D)
+// ============================================================
+
+message InventorySnapshot {
+    int64 id = 1;
+    string player_uuid = 2;
+    string kind = 3;             // free-form: "tournament", "minigame", "backup"
+    string blob_ref = 4;         // storage backend reference
+    int64 size_bytes = 5;
+    string content_hash = 6;     // sha256 hex
+    string metadata_json = 7;
+    google.protobuf.Timestamp created_at = 8;
+}
+
+// TransferAuditEntry is one row of the cross-server-transfer audit log,
+// written by TransferService for every player-attempt regardless of outcome.
+message TransferAuditEntry {
+    int64 id = 1;
+    string network_id = 2;
+    string player_uuid = 3;
+    string target_server = 4;
+    string initiator = 5;
+    bool transferred = 6;
+    string error = 7;
+    string reason = 8;
+    google.protobuf.Timestamp initiated_at = 9;
+}
+
+// ============================================================
 // Common / Utility
 // ============================================================
 
