@@ -60,6 +60,7 @@ service NexusService {
     rpc UpdatePlayerChatSettings(UpdatePlayerChatSettingsRequest) returns (PlayerChatSettings);
     rpc GetPlayerNotificationPrefs(GetPlayerNotificationPrefsRequest) returns (PlayerNotificationPrefs);
     rpc UpdatePlayerNotificationPrefs(UpdatePlayerNotificationPrefsRequest) returns (PlayerNotificationPrefs);
+    rpc ListStreamers(ListStreamersRequest) returns (ListStreamersResponse);
     rpc EvaluateAutomod(EvaluateAutomodRequest) returns (EvaluateAutomodResponse);
 
     // --- Chat Webhooks ---
@@ -777,6 +778,8 @@ service NexusService {
     // --- Blog ---
     rpc GetBlogSettings(GetBlogSettingsRequest) returns (BlogSettings);
     rpc UpsertBlogSettings(UpsertBlogSettingsRequest) returns (BlogSettings);
+    rpc GetLiveSettings(GetLiveSettingsRequest) returns (LiveSettings);
+    rpc UpsertLiveSettings(UpsertLiveSettingsRequest) returns (LiveSettings);
     rpc ListBlogPosts(ListBlogPostsRequest) returns (ListBlogPostsResponse);
     rpc GetBlogPost(GetBlogPostRequest) returns (BlogPost);
     rpc CreateBlogPost(CreateBlogPostRequest) returns (BlogPost);
@@ -1138,6 +1141,7 @@ message ChatMessageRequest {
     string sender_nickname = 8;
     string sender_chat_color = 9;
     bool sender_streamer = 10;
+    string sender_streamer_platform = 11;  // colors the LIVE badge per platform
 }
 
 message ChatMessageResponse {
@@ -1222,6 +1226,25 @@ message UpdatePlayerChatSettingsRequest {
 
 message GetPlayerNotificationPrefsRequest {
     string uuid = 1;
+}
+
+message ListStreamersRequest {
+    string network_id = 1;   // optional filter; "" = all networks
+    bool online_only = 2;    // reserved; directory currently lists online streamers
+    repeated string server_names = 3;  // optional allow-list; restricts to these servers
+}
+
+message ListStreamersResponse {
+    repeated StreamerEntry streamers = 1;
+}
+
+message StreamerEntry {
+    string uuid = 1;
+    string name = 2;
+    string platform = 3;     // "twitch" | "youtube" | "kick"
+    string handle = 4;
+    string url = 5;          // derived watch URL
+    string server_name = 6;  // current server the streamer is on
 }
 
 message UpdatePlayerNotificationPrefsRequest {
@@ -2696,6 +2719,9 @@ message ListWikiArticlePermissionsResponse {
 // --- Blog ---
 message GetBlogSettingsRequest { int64 site_id = 1; }
 message UpsertBlogSettingsRequest { BlogSettings settings = 1; }
+
+message GetLiveSettingsRequest { int64 site_id = 1; }
+message UpsertLiveSettingsRequest { LiveSettings settings = 1; }
 // Filters: status_filter ("DRAFT"/"PUBLISHED"/"SCHEDULED"/"ARCHIVED"; empty=all).
 // published_only is the public path shortcut. category_id / tag_id filter via
 // the polymorphic taxonomy maps. year+month bound published_at for archives.

@@ -332,6 +332,8 @@ message PlayerChatSettings {
     string nickname = 5;
     string chat_color = 6;
     bool streamer_mode = 7;
+    string streaming_platform = 8;  // "twitch" | "youtube" | "kick" | ""
+    string platform_handle = 9;     // channel handle, no URL
 }
 
 // PlayerNotificationPrefs controls which in-game notifications a player receives.
@@ -342,6 +344,7 @@ message PlayerNotificationPrefs {
     bool global_chat = 3;         // cross-server global chat channels
     bool staff_tickets = 4;       // ticket created/reply alerts (staff)
     bool staff_punishments = 5;   // ban/mute/kick/warn alerts (staff)
+    bool streamer_golive = 6;     // "X is now LIVE" go-live announcements
 }
 
 message PrivateMessage {
@@ -1891,6 +1894,26 @@ message BlogSettings {
     string settings_json = 8;
     google.protobuf.Timestamp created_at = 9;
     google.protobuf.Timestamp updated_at = 10;
+}
+
+// Per-site configuration for the public live-streamers page.
+// scope: "GLOBAL" (all networks) | "NETWORK" (this site's network) | "SERVERS"
+// (the server_names allow-list). layout: "GRID" | "LIST" | "COMPACT".
+message LiveSettings {
+    int64 site_id = 1;
+    int64 subsite_id = 2;
+    bool enabled = 3;
+    string path_prefix = 4;
+    string title = 5;
+    string description = 6;
+    string scope = 7;
+    repeated string server_names = 8;
+    string layout = 9;
+    bool show_platform = 10;
+    bool show_server = 11;
+    string settings_json = 12;   // accent/color flags
+    google.protobuf.Timestamp created_at = 13;
+    google.protobuf.Timestamp updated_at = 14;
 }
 
 // One authored blog post. `publish_at` is the scheduled fire time when status
