@@ -572,6 +572,7 @@ message ServerHeartbeat {
     bool online = 11;
     google.protobuf.Timestamp last_heartbeat_at = 12;
     string pelican_server_id = 13;
+    int32 queue_depth = 14; // Nolan: summed queue size across all backend queues
 }
 
 message ServerHealthLog {
@@ -957,6 +958,10 @@ message ManagedServer {
     bool maintenance_mode = 12;
     string maintenance_reason = 13;
     string default_currency_code = 14;
+    // Per-server player-info forwarding override for Nolan/VelocityCTD proxies
+    // (non-invasive multi-forwarding). One of: NONE, LEGACY, BUNGEEGUARD, MODERN.
+    // Empty = inherit the proxy's global player-info-forwarding-mode.
+    string forwarding_mode = 15;
 }
 
 message ServerGroup {

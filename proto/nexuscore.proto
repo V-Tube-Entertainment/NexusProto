@@ -2082,7 +2082,7 @@ message ListGdprRequestsRequest { string status = 1; int32 page_size = 2; string
 message ListGdprRequestsResponse { repeated DataDeletionRequest requests = 1; string next_page_token = 2; }
 
 // --- Health ---
-message HealthMetricsRequest { string server_name = 1; string network_id = 2; string server_type = 3; float tps = 4; float mspt = 5; float cpu_percent = 6; int32 memory_used_mb = 7; int32 memory_max_mb = 8; int32 player_count = 9; int64 uptime_seconds = 10; string pelican_server_id = 11; }
+message HealthMetricsRequest { string server_name = 1; string network_id = 2; string server_type = 3; float tps = 4; float mspt = 5; float cpu_percent = 6; int32 memory_used_mb = 7; int32 memory_max_mb = 8; int32 player_count = 9; int64 uptime_seconds = 10; string pelican_server_id = 11; int32 queue_depth = 12; }
 message GetServerHealthRequest { string server_name = 1; }
 message ListServersRequest { string network_id = 1; }
 message ListServersResponse { repeated ServerHeartbeat servers = 1; }
@@ -2099,6 +2099,7 @@ message CreateManagedServerRequest {
     int32 port = 5;
     string description = 6;
     string default_currency_code = 7;
+    string forwarding_mode = 8; // Nolan multi-forwarding override; empty = inherit
 }
 message CreateManagedServerResponse {
     ManagedServer server = 1;
@@ -2113,6 +2114,7 @@ message UpdateManagedServerRequest {
     int32 port = 6;
     string description = 7;
     string default_currency_code = 8;
+    string forwarding_mode = 9; // Nolan multi-forwarding override; empty = inherit
 }
 message DeleteManagedServerRequest { int64 id = 1; }
 message RotateManagedServerApiKeyRequest { int64 id = 1; }
