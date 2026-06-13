@@ -331,6 +331,17 @@ message PlayerChatSettings {
     bool spy_mode = 4;
     string nickname = 5;
     string chat_color = 6;
+    bool streamer_mode = 7;
+}
+
+// PlayerNotificationPrefs controls which in-game notifications a player receives.
+// Each flag defaults to true (notifications on); false means muted.
+message PlayerNotificationPrefs {
+    string uuid = 1;
+    bool announcements = 2;       // network/server broadcast announcements
+    bool global_chat = 3;         // cross-server global chat channels
+    bool staff_tickets = 4;       // ticket created/reply alerts (staff)
+    bool staff_punishments = 5;   // ban/mute/kick/warn alerts (staff)
 }
 
 message PrivateMessage {

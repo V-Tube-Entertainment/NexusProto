@@ -58,6 +58,8 @@ service NexusService {
     rpc GetPrivateMessages(GetPrivateMessagesRequest) returns (GetPrivateMessagesResponse);
     rpc GetPlayerChatSettings(GetPlayerChatSettingsRequest) returns (PlayerChatSettings);
     rpc UpdatePlayerChatSettings(UpdatePlayerChatSettingsRequest) returns (PlayerChatSettings);
+    rpc GetPlayerNotificationPrefs(GetPlayerNotificationPrefsRequest) returns (PlayerNotificationPrefs);
+    rpc UpdatePlayerNotificationPrefs(UpdatePlayerNotificationPrefsRequest) returns (PlayerNotificationPrefs);
     rpc EvaluateAutomod(EvaluateAutomodRequest) returns (EvaluateAutomodResponse);
 
     // --- Chat Webhooks ---
@@ -1135,6 +1137,7 @@ message ChatMessageRequest {
     bool bypass_automod = 7;
     string sender_nickname = 8;
     string sender_chat_color = 9;
+    bool sender_streamer = 10;
 }
 
 message ChatMessageResponse {
@@ -1215,6 +1218,14 @@ message GetPlayerChatSettingsRequest {
 
 message UpdatePlayerChatSettingsRequest {
     PlayerChatSettings settings = 1;
+}
+
+message GetPlayerNotificationPrefsRequest {
+    string uuid = 1;
+}
+
+message UpdatePlayerNotificationPrefsRequest {
+    PlayerNotificationPrefs prefs = 1;
 }
 
 message EvaluateAutomodRequest {
