@@ -1,0 +1,5 @@
+# Git hooks and shell scripts must stay LF so they run under Git Bash on
+# Windows (core.autocrlf=true would otherwise rewrite the shebang line to
+# CRLF and break "#!/bin/sh\r"). Keep this regardless of local autocrlf.
+.githooks/** text eol=lf
+*.sh text eol=lf

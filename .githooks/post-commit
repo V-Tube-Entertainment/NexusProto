@@ -1,0 +1,44 @@
+#!/bin/sh
+# Self-healing auto-push for the shared proto repo.
+#
+# Why this exists: NexusProto is cloned in several places (standalone plus the
+# `nexus-proto` git submodule inside NexusCore, NexusWeb and NexusControlCommon).
+# Editing protos in any of those clones is normal. A plain `git push` from a
+# clone that is behind origin is rejected (non-fast-forward), which used to
+# leave you "committed but un-pushable" every time. This hook instead fetches,
+# rebases your new commit onto the remote tip, and pushes — so committing from
+# ANY clone self-heals instead of getting stuck.
+#
+# Activated together with the pre-commit secret scanner via:
+#     git config core.hooksPath .githooks
+# Run that once in every clone, including each nexus-proto submodule worktree.
+
+branch=$(git symbolic-ref --short HEAD 2>/dev/null) || exit 0
+
+# Belt-and-suspenders guard; this hook does not create commits itself.
+[ -n "$NEXUSPROTO_HOOK_RUNNING" ] && exit 0
+NEXUSPROTO_HOOK_RUNNING=1
+export NEXUSPROTO_HOOK_RUNNING
+
+echo "[post-commit] syncing $branch with origin..."
+if ! git fetch -q origin "$branch" 2>/dev/null; then
+    echo "[post-commit] fetch failed (offline?). Your commit is safe; run 'git push' later."
+    exit 0
+fi
+
+# Rebase the new commit onto the remote tip. --autostash protects any unrelated
+# working-tree changes during the replay.
+if ! git rebase -q --autostash "origin/$branch" 2>/dev/null; then
+    git rebase --abort 2>/dev/null
+    echo "[post-commit] WARNING: '$branch' diverged from origin and auto-rebase hit conflicts."
+    echo "[post-commit] Your commit is safe. Resolve manually:"
+    echo "[post-commit]     git pull --rebase origin $branch    # fix conflicts, then"
+    echo "[post-commit]     git push origin $branch"
+    exit 0
+fi
+
+if git push -q origin "$branch"; then
+    echo "[post-commit] pushed $branch to origin."
+else
+    echo "[post-commit] push failed; run 'git push origin $branch' manually."
+fi
