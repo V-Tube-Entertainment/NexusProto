@@ -12,7 +12,7 @@ service NexusEventStream {
 message SubscribeRequest {
     string network_id = 1;
     string server_name = 2;
-    string server_type = 3; // VELOCITY, NOLAN, PAPER, FOLIA, MULTINEIL, SPONGE, NEOFORGE, FABRIC, FORGE
+    string server_type = 3; // VELOCITY, NOLAN, PAPER, FOLIA, NEIL, MULTINEIL, SPONGE, NEOFORGE, FABRIC, FORGE
 }
 
 message NexusEvent {
