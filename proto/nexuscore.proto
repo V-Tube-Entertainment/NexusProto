@@ -2317,8 +2317,8 @@ message GetBalanceRequest { string uuid = 1; string currency_code = 2; }
 message BalanceResponse { string uuid = 1; string currency_code = 2; double balance = 3; }
 message GetAllBalancesRequest { string uuid = 1; }
 message AllBalancesResponse { repeated BalanceResponse balances = 1; }
-message ModifyBalanceRequest { string uuid = 1; string currency_code = 2; double amount = 3; string transaction_type = 4; string source_description = 5; string source_server = 6; string initiated_by_uuid = 7; }
-message PlayerPayRequest { string sender_uuid = 1; string recipient_uuid = 2; string currency_code = 3; double amount = 4; string source_server = 5; }
+message ModifyBalanceRequest { string uuid = 1; string currency_code = 2; double amount = 3; string transaction_type = 4; string source_description = 5; string source_server = 6; string initiated_by_uuid = 7; string idempotency_key = 8; }
+message PlayerPayRequest { string sender_uuid = 1; string recipient_uuid = 2; string currency_code = 3; double amount = 4; string source_server = 5; string idempotency_key = 6; }
 message PayResponse { bool success = 1; string message = 2; double sender_balance = 3; double recipient_balance = 4; }
 message ExchangeCurrencyRequest { string uuid = 1; string from_currency_code = 2; string to_currency_code = 3; double amount = 4; }
 message ExchangeResponse { bool success = 1; string message = 2; double from_amount = 3; double to_amount = 4; double fee = 5; }
@@ -2392,13 +2392,13 @@ message ListShopItemsResponse {
     string next_page_token = 2;
     int32 total_count = 3;
 }
-message ShopTransactRequest { int64 shop_id = 1; int64 shop_item_id = 2; string uuid = 3; int32 quantity = 4; string action = 5; string source_server = 6; }
+message ShopTransactRequest { int64 shop_id = 1; int64 shop_item_id = 2; string uuid = 3; int32 quantity = 4; string action = 5; string source_server = 6; string idempotency_key = 7; }
 message ShopTransactResponse { bool success = 1; string message = 2; double total_cost = 3; double tax_amount = 4; double new_balance = 5; }
 
 // Auctions
 message CreateAuctionListingRequest { AuctionListing listing = 1; }
-message PlaceAuctionBidRequest { int64 listing_id = 1; string uuid = 2; double amount = 3; }
-message BuyNowRequest { int64 listing_id = 1; string uuid = 2; string source_server = 3; }
+message PlaceAuctionBidRequest { int64 listing_id = 1; string uuid = 2; double amount = 3; string idempotency_key = 4; }
+message BuyNowRequest { int64 listing_id = 1; string uuid = 2; string source_server = 3; string idempotency_key = 4; }
 message AuctionOperationResponse { bool success = 1; string message = 2; double new_balance = 3; }
 message CancelAuctionRequest { int64 listing_id = 1; string uuid = 2; }
 message ListAuctionListingsRequest { string currency_code = 1; string material = 2; string status = 3; int32 page_size = 4; string page_token = 5; string seller_uuid = 6; string network_id = 7; }
