@@ -510,6 +510,13 @@ service NexusService {
     rpc GetEconomyLeaderboard(EconomyLeaderboardRequest) returns (EconomyLeaderboardResponse);
     rpc CheckCurrencyAccess(CheckCurrencyAccessRequest) returns (CheckCurrencyAccessResponse);
 
+    // --- Economy Accounts (VaultUnlocked: players + Towny towns/nations) ---
+    rpc CreateEconomyAccount(CreateEconomyAccountRequest) returns (EconomyAccount);
+    rpc GetEconomyAccount(GetEconomyAccountRequest) returns (GetEconomyAccountResponse);
+    rpc RenameEconomyAccount(RenameEconomyAccountRequest) returns (EconomyAccount);
+    rpc ListEconomyAccounts(ListEconomyAccountsRequest) returns (ListEconomyAccountsResponse);
+    rpc GetAccountNameMap(GetAccountNameMapRequest) returns (GetAccountNameMapResponse);
+
     // --- Money Notes ---
     rpc CreateMoneyNote(CreateMoneyNoteRequest) returns (MoneyNoteResponse);
     rpc RedeemMoneyNote(RedeemMoneyNoteRequest) returns (RedeemMoneyNoteResponse);
@@ -2339,6 +2346,16 @@ message EconomyLeaderboardResponse { repeated LeaderboardEntry entries = 1; }
 // Currency access
 message CheckCurrencyAccessRequest { string uuid = 1; string currency_code = 2; string action = 3; }
 message CheckCurrencyAccessResponse { bool allowed = 1; string reason = 2; }
+
+// Economy accounts (VaultUnlocked account registry)
+message CreateEconomyAccountRequest { string uuid = 1; string name = 2; string account_type = 3; bool non_player = 4; string network_id = 5; }
+message GetEconomyAccountRequest { string uuid = 1; }
+message GetEconomyAccountResponse { bool exists = 1; EconomyAccount account = 2; }
+message RenameEconomyAccountRequest { string uuid = 1; string name = 2; }
+message ListEconomyAccountsRequest { string account_type = 1; int32 limit = 2; int32 offset = 3; }
+message ListEconomyAccountsResponse { repeated EconomyAccount accounts = 1; }
+message GetAccountNameMapRequest { int32 limit = 1; }
+message GetAccountNameMapResponse { map<string, string> names = 1; }
 
 // Money notes
 message CreateMoneyNoteRequest { string uuid = 1; string currency_code = 2; double amount = 3; string source_server = 4; }

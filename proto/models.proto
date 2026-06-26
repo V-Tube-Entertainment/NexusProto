@@ -830,6 +830,14 @@ message PlayerBalance {
     google.protobuf.Timestamp last_updated = 5;
 }
 
+message EconomyAccount {
+    string uuid = 1;
+    string name = 2;
+    string account_type = 3;  // PLAYER, TOWN, NATION, NPC, OTHER
+    bool non_player = 4;
+    string network_id = 5;
+}
+
 message EconomyTransaction {
     int64 id = 1;
     string uuid = 2;
