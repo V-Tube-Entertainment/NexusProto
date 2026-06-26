@@ -516,6 +516,7 @@ service NexusService {
     rpc RenameEconomyAccount(RenameEconomyAccountRequest) returns (EconomyAccount);
     rpc ListEconomyAccounts(ListEconomyAccountsRequest) returns (ListEconomyAccountsResponse);
     rpc GetAccountNameMap(GetAccountNameMapRequest) returns (GetAccountNameMapResponse);
+    rpc ImportEconomyAccounts(ImportEconomyAccountsRequest) returns (ImportEconomyAccountsResponse);
 
     // --- Money Notes ---
     rpc CreateMoneyNote(CreateMoneyNoteRequest) returns (MoneyNoteResponse);
@@ -2356,6 +2357,12 @@ message ListEconomyAccountsRequest { string account_type = 1; int32 limit = 2; i
 message ListEconomyAccountsResponse { repeated EconomyAccount accounts = 1; }
 message GetAccountNameMapRequest { int32 limit = 1; }
 message GetAccountNameMapResponse { map<string, string> names = 1; }
+
+// Bulk import (e.g. from TheNewEconomy), driven by a game-server plugin that
+// parses the source data locally and ships entries here.
+message ImportEconomyAccountEntry { string uuid = 1; string name = 2; string account_type = 3; bool non_player = 4; double balance = 5; }
+message ImportEconomyAccountsRequest { string currency_code = 1; repeated ImportEconomyAccountEntry entries = 2; string source_server = 3; bool skip_existing = 4; }
+message ImportEconomyAccountsResponse { int32 imported = 1; int32 skipped = 2; int32 failed = 3; repeated string errors = 4; }
 
 // Money notes
 message CreateMoneyNoteRequest { string uuid = 1; string currency_code = 2; double amount = 3; string source_server = 4; }
