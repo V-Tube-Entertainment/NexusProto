@@ -743,6 +743,15 @@ service NexusService {
     rpc ListInventorySnapshots(ListInventorySnapshotsRequest) returns (ListInventorySnapshotsResponse);
     rpc DeleteInventorySnapshot(DeleteInventorySnapshotRequest) returns (Empty);
 
+    // --- InvSee: live inventory view/edit (Phase 5E) ---
+    rpc RequestInvSee(RequestInvSeeRequest) returns (InvSeeRequest);
+    rpc GetInvSee(GetInvSeeRequest) returns (GetInvSeeResponse);
+    rpc ListInvSeeRequests(ListInvSeeRequestsRequest) returns (ListInvSeeRequestsResponse);
+    // FulfillInvSee is called by the game-server plugin to ack a capture (view)
+    // or an application (apply). Set error to report a failure.
+    rpc FulfillInvSee(FulfillInvSeeRequest) returns (InvSeeRequest);
+    rpc ApplyInvSee(ApplyInvSeeRequest) returns (InvSeeRequest);
+
     // --- Players ---
     rpc GetProfile(GetProfileRequest) returns (PlayerProfile);
     rpc SearchPlayers(SearchPlayersRequest) returns (SearchPlayersResponse);
@@ -4096,3 +4105,48 @@ message ListInventorySnapshotsResponse {
 }
 
 message DeleteInventorySnapshotRequest { int64 id = 1; }
+
+// ============================================================
+// InvSee — live inventory view/edit (Phase 5E)
+// ============================================================
+
+message RequestInvSeeRequest {
+    string player_uuid = 1;
+    string kind = 2;             // "inventory" (default) | "enderchest"
+}
+
+message GetInvSeeRequest { string request_id = 1; }
+message GetInvSeeResponse {
+    InvSeeRequest request = 1;
+    InventorySnapshot snapshot = 2;   // present once a snapshot is associated
+    bytes payload = 3;                // raw snapshot bytes for round-trip fidelity
+}
+
+message ListInvSeeRequestsRequest {
+    string player_uuid = 1;
+    string status = 2;
+    int32 page_size = 3;
+    string page_token = 4;
+}
+message ListInvSeeRequestsResponse {
+    repeated InvSeeRequest requests = 1;
+    string next_page_token = 2;
+    int32 total_count = 3;
+}
+
+// FulfillInvSeeRequest is the plugin's out-of-band ack. For a view request the
+// plugin first uploads the captured inventory via SaveInventorySnapshot and
+// passes the resulting snapshot_id here. For an apply request snapshot_id is
+// ignored. A non-empty error marks the request failed.
+message FulfillInvSeeRequest {
+    string request_id = 1;
+    int64 snapshot_id = 2;
+    string error = 3;
+}
+
+message ApplyInvSeeRequest {
+    string player_uuid = 1;
+    string kind = 2;
+    bytes payload = 3;           // edited inventory, raw bytes, max 1 MiB
+    string metadata_json = 4;
+}

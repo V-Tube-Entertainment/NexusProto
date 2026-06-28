@@ -2446,6 +2446,33 @@ message InventorySnapshot {
     google.protobuf.Timestamp created_at = 8;
 }
 
+// ============================================================
+// InvSee — live inventory view/edit (Phase 5E)
+// ============================================================
+
+// InvSeeRequest is one row of the invsee_requests table. It correlates an
+// asynchronous capture-or-apply round trip between a staff initiator and the
+// game-server plugin that holds the live player. The plugin fulfills it out of
+// band via FulfillInvSee once the inventory is captured (view) or applied
+// (apply); staff poll GetInvSee until it leaves the pending state.
+message InvSeeRequest {
+    int64 id = 1;
+    string request_id = 2;       // UUID correlating the async plugin fulfillment
+    string player_uuid = 3;
+    string kind = 4;             // "inventory" | "enderchest"
+    string mode = 5;             // "view" | "apply"
+    string requested_by = 6;     // staff actor uuid
+    string target_server = 7;    // server the player was on at request time
+    string network_id = 8;
+    string status = 9;           // pending|fulfilled|offline_snapshot|applied|failed|expired
+    int64 snapshot_id = 10;      // 0 until a snapshot is associated
+    bool online = 11;            // whether the player was online at request time
+    string error = 12;
+    google.protobuf.Timestamp created_at = 13;
+    google.protobuf.Timestamp fulfilled_at = 14;
+    google.protobuf.Timestamp expires_at = 15;
+}
+
 // TransferAuditEntry is one row of the cross-server-transfer audit log,
 // written by TransferService for every player-attempt regardless of outcome.
 message TransferAuditEntry {
