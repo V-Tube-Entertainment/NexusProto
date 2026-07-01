@@ -1,0 +1,91 @@
+syntax = "proto3";
+
+package nexuscore;
+
+option go_package = "github.com/V-Tube-Entertainment/NexusCore/api/proto";
+
+// ============================================================
+// Client-side rich GUI contract
+//
+// Wire format for the "nexus:gui" Minecraft custom-payload channel between a
+// server-side NexusControl host (Fabric/NeoForge mod, or Paper plugin) and the
+// player-installed NexusModsClient renderer mod. These messages are serialized
+// to bytes and carried INSIDE the Minecraft packet body — they never travel
+// over gRPC. The server host holds the gRPC link to NexusCore and originates
+// GuiScreen; the client renders it and replies with GuiActionRequest.
+// ============================================================
+
+// Bump when the wire semantics change. The client advertises the newest
+// protocol it understands in GuiHandshake.client_protocol; the server must not
+// send elements/features newer than that.
+enum GuiProtocol {
+    GUI_PROTOCOL_UNSPECIFIED = 0;
+    GUI_PROTOCOL_V1 = 1;
+}
+
+// Kinds of element the declarative renderer knows how to draw. Unknown values
+// (from a newer server) are ignored by an older client.
+enum GuiElementType {
+    GUI_ELEMENT_UNSPECIFIED = 0;
+    GUI_ELEMENT_LABEL = 1;       // static text (uses `text`)
+    GUI_ELEMENT_ITEM_ICON = 2;   // rendered ItemStack (uses `item_id`, `text` as tooltip)
+    GUI_ELEMENT_BUTTON = 3;      // clickable (uses `text`, fires `on_click`)
+    GUI_ELEMENT_LIST = 4;        // scrollable container of child elements
+    GUI_ELEMENT_TEXT_INPUT = 5;  // editable field; value returned in action data
+}
+
+// Pixel rectangle in screen space. Renderer may treat these as hints and
+// re-flow for the player's GUI scale.
+message GuiRect {
+    int32 x = 1;
+    int32 y = 2;
+    int32 width = 3;
+    int32 height = 4;
+}
+
+// What to do when an element is activated. Sent back verbatim as the action_id
+// (plus any collected input) in a GuiActionRequest.
+message GuiAction {
+    string action_id = 1;                 // server-defined, e.g. "buy", "page.next"
+    map<string, string> data = 2;         // static payload merged into the request
+    bool close_on_click = 3;              // close the screen after dispatching
+}
+
+message GuiElement {
+    GuiElementType type = 1;
+    GuiRect bounds = 2;
+    string text = 3;                      // label / button caption / tooltip
+    string item_id = 4;                   // e.g. "minecraft:emerald" for ITEM_ICON
+    GuiAction on_click = 5;               // for BUTTON / ITEM_ICON
+    string input_key = 6;                 // for TEXT_INPUT: key used in action data
+    string input_value = 7;               // for TEXT_INPUT: prefilled value
+    repeated GuiElement children = 8;     // for LIST
+}
+
+message GuiPanel {
+    GuiRect bounds = 1;
+    string bg = 2;                        // ARGB hex, e.g. "#C0101010", or a texture id
+    repeated GuiElement elements = 3;
+}
+
+// Server -> client: draw this screen.
+message GuiScreen {
+    string screen_id = 1;                 // "economy.balance"; "rich:shop" -> hand-coded client screen
+    string title = 2;
+    repeated GuiPanel panels = 3;
+    GuiProtocol protocol_version = 15;    // minimum protocol required to render fully
+}
+
+// Client -> server: the player activated something.
+message GuiActionRequest {
+    string screen_id = 1;
+    string action_id = 2;
+    map<string, string> data = 3;         // GuiAction.data merged with collected inputs
+}
+
+// Client -> server: sent on join / channel-ready so the host knows a renderer
+// is present (drives NexusGui.hasClientMod and the fallback switch).
+message GuiHandshake {
+    GuiProtocol client_protocol = 1;      // newest protocol the client understands
+    string mod_version = 2;               // NexusModsClient version, for diagnostics
+}
