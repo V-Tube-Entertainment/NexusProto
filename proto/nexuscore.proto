@@ -6,6 +6,7 @@ option go_package = "github.com/V-Tube-Entertainment/NexusCore/api/proto";
 
 import "google/protobuf/timestamp.proto";
 import "proto/models.proto";
+import "proto/gui.proto";
 
 // ============================================================
 // NexusService — Main RPC Service
@@ -509,6 +510,13 @@ service NexusService {
     rpc DeleteExchangeRate(DeleteExchangeRateRequest) returns (Empty);
     rpc GetEconomyLeaderboard(EconomyLeaderboardRequest) returns (EconomyLeaderboardResponse);
     rpc CheckCurrencyAccess(CheckCurrencyAccessRequest) returns (CheckCurrencyAccessResponse);
+
+    // --- Staff-authored GUI screens (data-driven; edited in the web dashboard) ---
+    rpc CreateGuiScreen(CreateGuiScreenRequest) returns (StoredGuiScreen);
+    rpc UpdateGuiScreen(UpdateGuiScreenRequest) returns (StoredGuiScreen);
+    rpc DeleteGuiScreen(DeleteGuiScreenRequest) returns (Empty);
+    rpc GetGuiScreen(GetGuiScreenRequest) returns (StoredGuiScreen);
+    rpc ListGuiScreens(ListGuiScreensRequest) returns (ListGuiScreensResponse);
 
     // --- Economy Accounts (VaultUnlocked: players + Towny towns/nations) ---
     rpc CreateEconomyAccount(CreateEconomyAccountRequest) returns (EconomyAccount);
@@ -2346,6 +2354,32 @@ message UpdateCurrencyRequest { Currency currency = 1; }
 message DeleteCurrencyRequest { int32 id = 1; }
 message ListCurrenciesRequest { string network_id = 1; }
 message ListCurrenciesResponse { repeated Currency currencies = 1; }
+
+// ============================================================
+// Staff-authored GUI screens
+// ============================================================
+
+// A persisted, staff-authored GUI screen. `screen` is the render model (reused
+// from gui.proto); the rest is storage metadata edited in the web dashboard.
+message StoredGuiScreen {
+    int64 id = 1;
+    string network_id = 2;
+    string screen_id = 3;              // stable id, unique per network (e.g. "menu.hub")
+    string title = 4;
+    string permission_node = 5;        // who may open it / gate for console actions ("" = open to all)
+    bool enabled = 6;
+    string open_command = 7;           // optional custom alias to open it (e.g. "hub"); "" = none
+    GuiScreen screen = 8;              // the panels/elements
+    google.protobuf.Timestamp updated_at = 9;
+    string updated_by = 10;
+}
+
+message CreateGuiScreenRequest { StoredGuiScreen screen = 1; }
+message UpdateGuiScreenRequest { StoredGuiScreen screen = 1; }
+message DeleteGuiScreenRequest { int64 id = 1; }
+message GetGuiScreenRequest { string network_id = 1; string screen_id = 2; }
+message ListGuiScreensRequest { string network_id = 1; }
+message ListGuiScreensResponse { repeated StoredGuiScreen screens = 1; }
 message GetExchangeRatesRequest { string currency_code = 1; }
 message ListExchangeRatesResponse { repeated CurrencyExchangeRate rates = 1; }
 message SetExchangeRateRequest { CurrencyExchangeRate rate = 1; }
