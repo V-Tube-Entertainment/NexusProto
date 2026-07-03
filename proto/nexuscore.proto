@@ -2369,9 +2369,11 @@ message StoredGuiScreen {
     string permission_node = 5;        // who may open it / gate for console actions ("" = open to all)
     bool enabled = 6;
     string open_command = 7;           // optional custom alias to open it (e.g. "hub"); "" = none
-    GuiScreen screen = 8;              // the panels/elements
+    GuiScreen screen = 8;              // legacy custom-renderer model (type==SCREEN); kept for back-compat
     google.protobuf.Timestamp updated_at = 9;
     string updated_by = 10;
+    GuiMenu menu = 11;                 // taxonomy content (chest/sign/anvil/book/screen)
+    MenuType type = 12;               // duplicated from menu.type for cheap listing/filtering
 }
 
 message CreateGuiScreenRequest { StoredGuiScreen screen = 1; }

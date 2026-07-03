@@ -76,6 +76,66 @@ message GuiScreen {
     GuiProtocol protocol_version = 15;    // minimum protocol required to render fully
 }
 
+// ============================================================
+// Server-rendered menu taxonomy
+//
+// Beyond the client-rendered GuiScreen (which needs the NexusMods client mod),
+// the same stored menu can be a VANILLA server-rendered container: chest, sign,
+// anvil, book, etc. These need no client mod and reuse GuiAction verbatim for
+// clicks (chest) and submits (sign/anvil, carrying typed text via {input}).
+// ============================================================
+
+enum MenuType {
+    MENU_TYPE_SCREEN = 0;   // custom client renderer (GuiScreen); needs the client mod
+    MENU_TYPE_CHEST = 1;    // vanilla chest inventory (rows x 9)
+    MENU_TYPE_SIGN = 2;     // sign edit input; on_submit runs with {input}
+    MENU_TYPE_ANVIL = 3;    // anvil rename input; on_submit runs with {input}
+    MENU_TYPE_BOOK = 4;     // written-book pages (read-only)
+    MENU_TYPE_HOPPER = 5;   // 1x5 container (ChestMenu variant)
+    MENU_TYPE_DROPPER = 6;  // 3x3 container (ChestMenu variant)
+}
+
+// A single populated slot in a chest/hopper/dropper menu.
+message ChestItem {
+    int32 slot = 1;                       // raw slot index
+    string item_id = 2;                    // e.g. "minecraft:diamond"
+    string name = 3;                       // display name (supports {player}/{server})
+    repeated string lore = 4;              // tooltip lines
+    GuiAction on_click = 5;                // fired on click (reuses the action interpreter)
+    int32 amount = 6;                      // stack size (defaults to 1)
+}
+
+message ChestMenu {
+    int32 rows = 1;                        // 1..6 (HOPPER/DROPPER ignore this, sized by MenuType)
+    repeated ChestItem items = 2;
+}
+
+message SignMenu {
+    repeated string prompt_lines = 1;      // pre-filled sign lines shown to the player
+    GuiAction on_submit = 2;               // runs after edit; typed text available as {input}
+}
+
+message AnvilMenu {
+    string prompt = 1;                     // pre-filled rename text
+    string left_item_id = 2;               // item shown in the left anvil slot
+    GuiAction on_submit = 3;               // runs on confirm; typed text available as {input}
+}
+
+message BookMenu {
+    repeated string pages = 1;             // page contents (read-only)
+}
+
+// Discriminated union of menu content. Plain typed fields (not a oneof) so
+// protobuf-JSON + the NexusWeb proto-loader round-trip predictably.
+message GuiMenu {
+    MenuType type = 1;
+    GuiScreen screen = 2;                  // type==SCREEN
+    ChestMenu chest = 3;                   // type==CHEST/HOPPER/DROPPER
+    SignMenu sign = 4;                     // type==SIGN
+    AnvilMenu anvil = 5;                   // type==ANVIL
+    BookMenu book = 6;                     // type==BOOK
+}
+
 // Client -> server: the player activated something.
 message GuiActionRequest {
     string screen_id = 1;
