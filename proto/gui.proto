@@ -60,6 +60,7 @@ message GuiElement {
     string input_key = 6;                 // for TEXT_INPUT: key used in action data
     string input_value = 7;               // for TEXT_INPUT: prefilled value
     repeated GuiElement children = 8;     // for LIST
+    string condition = 9;                 // render only when true (see ChestItem.condition)
 }
 
 message GuiPanel {
@@ -103,11 +104,35 @@ message ChestItem {
     repeated string lore = 4;              // tooltip lines
     GuiAction on_click = 5;                // fired on click (reuses the action interpreter)
     int32 amount = 6;                      // stack size (defaults to 1)
+    // Show this item only when the expression is true, e.g.
+    // "{balance} >= 500 && perm:shop.vip" or "{entry_status} == Online".
+    // Operators: == != > >= < <= && || ! ( ); perm:<node>; "quoted strings".
+    // Empty = always shown. Evaluated server-side; never sent to the client.
+    string condition = 7;
+    ChestItem otherwise = 8;               // shown in the same slot when condition is false
+}
+
+// A data-driven run of items: `template` is rendered once per entry of `source`
+// into `slots` (in order), paged when there are more entries than slots.
+// Template text gets {entry_*} tokens; prev/next/empty items get {page}/{pages}.
+//   servers                -> entry_name, entry_type, entry_online, entry_status,
+//                             entry_tps, entry_queue, entry_index
+//   baltop[:<currency>]    -> entry_rank, entry_name, entry_uuid, entry_value, entry_index
+//   leaderboard:<metric>   -> entry_rank, entry_name, entry_uuid, entry_value, entry_index
+message ChestList {
+    string source = 1;
+    repeated int32 slots = 2;              // page size = number of slots
+    ChestItem template = 3;                // its slot is ignored
+    ChestItem prev_page = 4;               // hidden on the first page; on_click is replaced
+    ChestItem next_page = 5;               // hidden on the last page; on_click is replaced
+    ChestItem empty = 6;                   // shown in the first slot when there are no entries
+    int32 limit = 7;                       // max entries fetched (0 = 100)
 }
 
 message ChestMenu {
     int32 rows = 1;                        // 1..6 (HOPPER/DROPPER ignore this, sized by MenuType)
     repeated ChestItem items = 2;
+    repeated ChestList lists = 3;          // expanded server-side before rendering
 }
 
 message SignMenu {
