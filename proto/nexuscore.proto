@@ -1836,11 +1836,23 @@ message ServerInfo {
 
 message GetOnlinePlayersRequest {
     string network_id = 1;
+    // Also fill `players` (names, servers, staff/vanish flags) from active sessions.
+    bool include_players = 2;
 }
 
 message GetOnlinePlayersResponse {
     repeated string uuids = 1;
     int32 count = 2;
+    repeated OnlinePlayer players = 3;
+}
+
+// One online player, from their active session.
+message OnlinePlayer {
+    string uuid = 1;
+    string username = 2;
+    string server_name = 3;
+    bool staff = 4;     // has a linked staff account
+    bool vanished = 5;  // callers should hide these from non-staff viewers
 }
 
 // --- Analytics ---

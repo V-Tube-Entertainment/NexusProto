@@ -61,6 +61,13 @@ message GuiElement {
     string input_value = 7;               // for TEXT_INPUT: prefilled value
     repeated GuiElement children = 8;     // for LIST
     string condition = 9;                 // render only when true (see ChestItem.condition)
+    // LIST only: when set, `children` are a per-entry template repeated once per
+    // entry of this source (see ChestList for sources and {entry_*} tokens), each
+    // copy shifted down by row_height. Expanded server-side; the client just scrolls.
+    string source = 10;
+    int32 limit = 11;                     // max entries (0 = 100)
+    int32 row_height = 12;                // px per entry (0 = template height + 2)
+    repeated GuiElement empty = 13;       // shown instead when the source has no entries
 }
 
 message GuiPanel {
@@ -119,6 +126,9 @@ message ChestItem {
 //                             entry_tps, entry_queue, entry_index
 //   baltop[:<currency>]    -> entry_rank, entry_name, entry_uuid, entry_value, entry_index
 //   leaderboard:<metric>   -> entry_rank, entry_name, entry_uuid, entry_value, entry_index
+//   players[:<server>]     -> entry_name, entry_uuid, entry_server, entry_staff, entry_index
+//   staff                  -> same as players, staff only
+// Vanished players are listed only to viewers with nexuscontrol.vanish.
 message ChestList {
     string source = 1;
     repeated int32 slots = 2;              // page size = number of slots
