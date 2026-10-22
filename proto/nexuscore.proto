@@ -523,6 +523,10 @@ service NexusService {
     rpc GetGuiScreenRevision(GetGuiScreenRevisionRequest) returns (GuiScreenRevision);
     // Make a saved version the live menu again (recorded as a new version).
     rpc RestoreGuiScreenRevision(RestoreGuiScreenRevisionRequest) returns (StoredGuiScreen);
+    // Unpublished edits: one draft per menu, never served to game servers.
+    rpc SaveGuiScreenDraft(SaveGuiScreenDraftRequest) returns (GuiScreenDraft);
+    rpc GetGuiScreenDraft(GetGuiScreenDraftRequest) returns (GuiScreenDraft);
+    rpc DiscardGuiScreenDraft(GetGuiScreenDraftRequest) returns (Empty);
 
     // --- Menu purchases: the GUI `purchase` action, settled by NexusCore ---
     // The offer (price, currency, limit, cooldown, reward commands) is read from
@@ -2438,6 +2442,12 @@ message ListGuiScreenRevisionsRequest {
 }
 message ListGuiScreenRevisionsResponse { repeated GuiScreenRevision revisions = 1; }
 message GetGuiScreenRevisionRequest { int64 id = 1; }
+message GuiScreenDraft {
+    bool exists = 1;
+    StoredGuiScreen screen = 2;        // the draft content (updated_by/updated_at = who/when it was saved)
+}
+message SaveGuiScreenDraftRequest { StoredGuiScreen screen = 1; }
+message GetGuiScreenDraftRequest { string network_id = 1; string screen_id = 2; }
 message RestoreGuiScreenRevisionRequest {
     int64 revision_id = 1;
     string restored_by = 2;
