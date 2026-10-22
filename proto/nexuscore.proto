@@ -537,6 +537,10 @@ service NexusService {
     rpc GetMenuOfferStates(GetMenuOfferStatesRequest) returns (GetMenuOfferStatesResponse);
     rpc ListMenuPurchases(ListMenuPurchasesRequest) returns (ListMenuPurchasesResponse);
 
+    // --- Menu analytics: opens/clicks batched by game servers, daily rollups ---
+    rpc RecordMenuEvents(RecordMenuEventsRequest) returns (Empty);
+    rpc GetMenuStats(GetMenuStatsRequest) returns (GetMenuStatsResponse);
+
     // --- Economy Accounts (VaultUnlocked: players + Towny towns/nations) ---
     rpc CreateEconomyAccount(CreateEconomyAccountRequest) returns (EconomyAccount);
     rpc GetEconomyAccount(GetEconomyAccountRequest) returns (GetEconomyAccountResponse);
@@ -2522,6 +2526,50 @@ message ListMenuPurchasesRequest {
 }
 
 message ListMenuPurchasesResponse { repeated MenuPurchase purchases = 1; }
+
+// --- Menu analytics ---
+message MenuEvent {
+    string screen_id = 1;
+    string kind = 2;                   // "open" | "click"
+    string target = 3;                 // click target: "slot:13" (chest), "submit" (sign/anvil), "<action> <arg>" (screen)
+    string player_uuid = 4;
+    int64 at_unix = 5;                 // seconds; bucketed by UTC day
+}
+message RecordMenuEventsRequest {
+    string network_id = 1;
+    string source_server = 2;
+    repeated MenuEvent events = 3;     // at most 1000 per call
+}
+message GetMenuStatsRequest {
+    string network_id = 1;
+    string screen_id = 2;              // "" = per-menu totals for the whole network (menus field only)
+    int32 days = 3;                    // default 30, max 180
+}
+message MenuStatsDay {
+    string day = 1;                    // YYYY-MM-DD (UTC)
+    int64 opens = 2;
+    int64 clicks = 3;
+    int64 players = 4;                 // distinct players who opened it that day
+    int64 purchases = 5;
+    double revenue = 6;                // sum of purchase prices (mixed currencies are summed as-is)
+}
+message MenuStatsTarget {
+    string target = 1;
+    int64 clicks = 2;
+}
+message MenuStatsSummary {
+    string screen_id = 1;
+    int64 opens = 2;
+    int64 clicks = 3;
+    int64 players = 4;                 // distinct over the whole period
+    int64 purchases = 5;
+}
+message GetMenuStatsResponse {
+    repeated MenuStatsDay days = 1;    // oldest first, every day of the period (zeros included)
+    repeated MenuStatsTarget targets = 2;  // most clicked first
+    MenuStatsSummary total = 3;
+    repeated MenuStatsSummary menus = 4;   // only when screen_id is ""
+}
 message GetExchangeRatesRequest { string currency_code = 1; }
 message ListExchangeRatesResponse { repeated CurrencyExchangeRate rates = 1; }
 message SetExchangeRateRequest { CurrencyExchangeRate rate = 1; }
