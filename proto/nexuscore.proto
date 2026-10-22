@@ -2413,6 +2413,10 @@ message StoredGuiScreen {
     string updated_by = 10;
     GuiMenu menu = 11;                 // taxonomy content (chest/sign/anvil/book/screen)
     MenuType type = 12;               // duplicated from menu.type for cheap listing/filtering
+    // Servers this menu exists on: server-name patterns, `*` matches any run of characters
+    // (e.g. "lobby", "survival-*"), case-insensitive. Empty = every server. Elsewhere it
+    // can't be opened and its open_command isn't registered.
+    repeated string servers = 13;
 }
 
 message CreateGuiScreenRequest { StoredGuiScreen screen = 1; }
