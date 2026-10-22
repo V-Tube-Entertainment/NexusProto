@@ -517,6 +517,12 @@ service NexusService {
     rpc DeleteGuiScreen(DeleteGuiScreenRequest) returns (Empty);
     rpc GetGuiScreen(GetGuiScreenRequest) returns (StoredGuiScreen);
     rpc ListGuiScreens(ListGuiScreensRequest) returns (ListGuiScreensResponse);
+    // Saved versions of a menu (every create/update/restore), newest first. History
+    // outlives the menu, so a deleted menu can be restored.
+    rpc ListGuiScreenRevisions(ListGuiScreenRevisionsRequest) returns (ListGuiScreenRevisionsResponse);
+    rpc GetGuiScreenRevision(GetGuiScreenRevisionRequest) returns (GuiScreenRevision);
+    // Make a saved version the live menu again (recorded as a new version).
+    rpc RestoreGuiScreenRevision(RestoreGuiScreenRevisionRequest) returns (StoredGuiScreen);
 
     // --- Menu purchases: the GUI `purchase` action, settled by NexusCore ---
     // The offer (price, currency, limit, cooldown, reward commands) is read from
@@ -2407,6 +2413,31 @@ message DeleteGuiScreenRequest { int64 id = 1; }
 message GetGuiScreenRequest { string network_id = 1; string screen_id = 2; }
 message ListGuiScreensRequest { string network_id = 1; }
 message ListGuiScreensResponse { repeated StoredGuiScreen screens = 1; }
+
+// One saved version of a menu.
+message GuiScreenRevision {
+    int64 id = 1;
+    string network_id = 2;
+    string screen_id = 3;
+    int32 revision = 4;                // 1, 2, 3... per screen
+    string updated_by = 5;
+    google.protobuf.Timestamp created_at = 6;
+    repeated string changes = 7;       // what differs from the previous version: title, permission, enabled, command, type, content, restored:<n>
+    int32 content_bytes = 8;
+    StoredGuiScreen snapshot = 9;      // metadata always; menu/screen content only from GetGuiScreenRevision / include_content
+}
+message ListGuiScreenRevisionsRequest {
+    string network_id = 1;
+    string screen_id = 2;              // "" = the latest version of each deleted menu of the network
+    int32 limit = 3;                   // default and max 50
+    bool include_content = 4;
+}
+message ListGuiScreenRevisionsResponse { repeated GuiScreenRevision revisions = 1; }
+message GetGuiScreenRevisionRequest { int64 id = 1; }
+message RestoreGuiScreenRevisionRequest {
+    int64 revision_id = 1;
+    string restored_by = 2;
+}
 
 // --- Menu purchases ---
 enum MenuPurchaseStatus {
