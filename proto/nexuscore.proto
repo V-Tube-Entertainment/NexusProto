@@ -518,6 +518,19 @@ service NexusService {
     rpc GetGuiScreen(GetGuiScreenRequest) returns (StoredGuiScreen);
     rpc ListGuiScreens(ListGuiScreensRequest) returns (ListGuiScreensResponse);
 
+    // --- Menu purchases: the GUI `purchase` action, settled by NexusCore ---
+    // The offer (price, currency, limit, cooldown, reward commands) is read from
+    // NexusCore's own copy of the stored menu, never from the caller.
+    rpc PurchaseMenuOffer(PurchaseMenuOfferRequest) returns (PurchaseMenuOfferResponse);
+    // The server ran (or failed to run) the reward commands of a purchase.
+    rpc ConfirmMenuPurchase(ConfirmMenuPurchaseRequest) returns (Empty);
+    // Undelivered purchases for a player (e.g. the server crashed mid-delivery);
+    // claimed for 5 minutes so two servers never deliver the same one.
+    rpc ClaimPendingMenuPurchases(ClaimPendingMenuPurchasesRequest) returns (ClaimPendingMenuPurchasesResponse);
+    // Per-offer purchase counts and cooldowns for a player ({bought_x}, {cooldown_x}).
+    rpc GetMenuOfferStates(GetMenuOfferStatesRequest) returns (GetMenuOfferStatesResponse);
+    rpc ListMenuPurchases(ListMenuPurchasesRequest) returns (ListMenuPurchasesResponse);
+
     // --- Economy Accounts (VaultUnlocked: players + Towny towns/nations) ---
     rpc CreateEconomyAccount(CreateEconomyAccountRequest) returns (EconomyAccount);
     rpc GetEconomyAccount(GetEconomyAccountRequest) returns (GetEconomyAccountResponse);
@@ -2394,6 +2407,87 @@ message DeleteGuiScreenRequest { int64 id = 1; }
 message GetGuiScreenRequest { string network_id = 1; string screen_id = 2; }
 message ListGuiScreensRequest { string network_id = 1; }
 message ListGuiScreensResponse { repeated StoredGuiScreen screens = 1; }
+
+// --- Menu purchases ---
+enum MenuPurchaseStatus {
+    MENU_PURCHASE_OK = 0;
+    MENU_PURCHASE_INSUFFICIENT_FUNDS = 1;
+    MENU_PURCHASE_LIMIT_REACHED = 2;
+    MENU_PURCHASE_COOLDOWN = 3;
+    MENU_PURCHASE_UNKNOWN_OFFER = 4;    // no `purchase` action with that offer id in the stored menu
+    MENU_PURCHASE_MENU_DISABLED = 5;
+    MENU_PURCHASE_INVALID_OFFER = 6;    // bad price/currency/limit in the stored action
+}
+
+message MenuPurchase {
+    int64 id = 1;
+    string player_uuid = 2;
+    string network_id = 3;
+    string screen_id = 4;
+    string offer_id = 5;
+    string currency_code = 6;
+    double price = 7;
+    repeated string commands = 8;       // raw; the server substitutes {player} etc. when running them
+    string status = 9;                  // PENDING | DELIVERED | FAILED
+    string error = 10;
+    string source_server = 11;
+    google.protobuf.Timestamp created_at = 12;
+    google.protobuf.Timestamp delivered_at = 13;
+}
+
+message PurchaseMenuOfferRequest {
+    string player_uuid = 1;
+    string network_id = 2;
+    string screen_id = 3;
+    string offer_id = 4;
+    string idempotency_key = 5;         // required; a replay returns the original result
+    string source_server = 6;
+    string default_currency = 7;        // used when the offer names no currency
+}
+
+message PurchaseMenuOfferResponse {
+    MenuPurchaseStatus status = 1;
+    string message = 2;                 // human-readable reason when status != OK
+    MenuPurchase purchase = 3;          // set when OK; deliver its commands then confirm
+    double balance_after = 4;
+    int64 cooldown_remaining_seconds = 5;
+    int32 purchase_count = 6;           // purchases of this offer by the player, including this one
+}
+
+message ConfirmMenuPurchaseRequest {
+    int64 purchase_id = 1;
+    bool delivered = 2;
+    string error = 3;
+}
+
+message ClaimPendingMenuPurchasesRequest {
+    string player_uuid = 1;
+    string network_id = 2;
+}
+
+message ClaimPendingMenuPurchasesResponse { repeated MenuPurchase purchases = 1; }
+
+message GetMenuOfferStatesRequest {
+    string player_uuid = 1;
+    string network_id = 2;
+    string screen_id = 3;
+}
+
+message MenuOfferState {
+    int32 purchase_count = 1;
+    int64 cooldown_remaining_seconds = 2;
+}
+
+message GetMenuOfferStatesResponse { map<string, MenuOfferState> offers = 1; }
+
+message ListMenuPurchasesRequest {
+    string network_id = 1;
+    string screen_id = 2;               // optional filter
+    string player_uuid = 3;             // optional filter
+    int32 limit = 4;                    // 0 = 100
+}
+
+message ListMenuPurchasesResponse { repeated MenuPurchase purchases = 1; }
 message GetExchangeRatesRequest { string currency_code = 1; }
 message ListExchangeRatesResponse { repeated CurrencyExchangeRate rates = 1; }
 message SetExchangeRateRequest { CurrencyExchangeRate rate = 1; }

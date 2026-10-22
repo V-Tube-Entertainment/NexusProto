@@ -45,6 +45,13 @@ message GuiRect {
 
 // What to do when an element is activated. Sent back verbatim as the action_id
 // (plus any collected input) in a GuiActionRequest.
+// Stored-menu action ids: open_screen(screen), run_command(command),
+// run_console(command, perm), message(text), close, page(list, page), and
+// purchase(offer, price, currency, limit, cooldown, commands, message) — a
+// NexusCore-settled sale: price is debited atomically, `limit` caps lifetime
+// purchases per player, `cooldown` is seconds between purchases, `commands`
+// (one per line) run as console on success, `message` is the success text.
+// Use {bought_<offer>} / {cooldown_<offer>} to show ownership or wait time.
 message GuiAction {
     string action_id = 1;                 // server-defined, e.g. "buy", "page.next"
     map<string, string> data = 2;         // static payload merged into the request
