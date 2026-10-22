@@ -150,6 +150,10 @@ message ChestMenu {
     int32 rows = 1;                        // 1..6 (HOPPER/DROPPER ignore this, sized by MenuType)
     repeated ChestItem items = 2;
     repeated ChestList lists = 3;          // expanded server-side before rendering
+    // While open, re-resolve placeholders/lists and update the menu in place every
+    // N seconds (0 = only on clicks and edits; clamped to 2..3600). Needs a host
+    // renderer with live-update support; elsewhere it is ignored.
+    int32 refresh_seconds = 4;
 }
 
 message SignMenu {
