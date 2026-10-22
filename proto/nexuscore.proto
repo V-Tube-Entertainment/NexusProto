@@ -2463,6 +2463,9 @@ message ConfirmMenuPurchaseRequest {
 message ClaimPendingMenuPurchasesRequest {
     string player_uuid = 1;
     string network_id = 2;
+    // Only purchases made on this server, so server-specific reward commands
+    // (e.g. `give`) never run elsewhere. Empty = any server.
+    string source_server = 3;
 }
 
 message ClaimPendingMenuPurchasesResponse { repeated MenuPurchase purchases = 1; }
