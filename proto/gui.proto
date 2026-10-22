@@ -21,6 +21,9 @@ option go_package = "github.com/V-Tube-Entertainment/NexusCore/api/proto";
 enum GuiProtocol {
     GUI_PROTOCOL_UNSPECIFIED = 0;
     GUI_PROTOCOL_V1 = 1;
+    // V2: formatted text (GuiElement.text_json / GuiScreen.title_json), in-place
+    // updates (GuiScreen.update_only) and the GuiScreenClosed signal.
+    GUI_PROTOCOL_V2 = 2;
 }
 
 // Kinds of element the declarative renderer knows how to draw. Unknown values
@@ -75,6 +78,9 @@ message GuiElement {
     int32 limit = 11;                     // max entries (0 = 100)
     int32 row_height = 12;                // px per entry (0 = template height + 2)
     repeated GuiElement empty = 13;       // shown instead when the source has no entries
+    // V2: `text` as Minecraft text-component JSON (colors, gradients). Filled by the
+    // server for V2 clients; `text` always carries a §-code fallback.
+    string text_json = 14;
 }
 
 message GuiPanel {
@@ -88,7 +94,22 @@ message GuiScreen {
     string screen_id = 1;                 // "economy.balance"; "rich:shop" -> hand-coded client screen
     string title = 2;
     repeated GuiPanel panels = 3;
+    string title_json = 4;                // V2: title as text-component JSON
+    // V2: replace the open screen with the same screen_id in place (keeping typed
+    // text and scroll); ignored when that screen isn't open. Never opens a screen.
+    bool update_only = 5;
+    // Authoring: re-send the open screen every N seconds (0 = only on edits;
+    // clamped to 2..3600). Needs a V2 client; resolved server-side.
+    int32 refresh_seconds = 6;
+    // V2: server-chosen id of this open; echoed back in GuiScreenClosed.
+    string session = 7;
     GuiProtocol protocol_version = 15;    // minimum protocol required to render fully
+}
+
+// Client -> server (V2): the player closed the screen (or another screen replaced it).
+message GuiScreenClosed {
+    string screen_id = 1;
+    string session = 2;
 }
 
 // ============================================================
