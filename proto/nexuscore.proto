@@ -88,6 +88,53 @@ service NexusService {
     rpc ClearReadMail(ClearReadMailRequest) returns (Empty);
     rpc GetUnreadMailCount(GetUnreadMailCountRequest) returns (GetUnreadMailCountResponse);
 
+    // --- Friends ---
+    rpc SendFriendRequest(SendFriendRequestRequest) returns (SendFriendRequestResponse);
+    rpc RespondFriendRequest(RespondFriendRequestRequest) returns (FriendActionResponse);
+    rpc RemoveFriend(RemoveFriendRequest) returns (FriendActionResponse);
+    rpc ListFriends(ListFriendsRequest) returns (ListFriendsResponse);
+    rpc ListFriendRequests(ListFriendRequestsRequest) returns (ListFriendRequestsResponse);
+    rpc GetFriendSettings(GetFriendSettingsRequest) returns (FriendSettings);
+    rpc UpdateFriendSettings(FriendSettings) returns (FriendSettings);
+
+    // --- Parties ---
+    rpc CreateParty(CreatePartyRequest) returns (Party);
+    rpc GetParty(GetPartyRequest) returns (GetPartyResponse);
+    rpc ListParties(ListPartiesRequest) returns (ListPartiesResponse);
+    rpc InviteToParty(InviteToPartyRequest) returns (PartyInvite);
+    rpc AcceptPartyInvite(AcceptPartyInviteRequest) returns (Party);
+    rpc DeclinePartyInvite(DeclinePartyInviteRequest) returns (Empty);
+    rpc JoinParty(JoinPartyRequest) returns (Party);
+    rpc LeaveParty(LeavePartyRequest) returns (Empty);
+    rpc KickFromParty(KickFromPartyRequest) returns (Party);
+    rpc TransferPartyLeader(TransferPartyLeaderRequest) returns (Party);
+    rpc DisbandParty(DisbandPartyRequest) returns (Empty);
+    rpc SetPartyOpen(SetPartyOpenRequest) returns (Party);
+    rpc WarpParty(WarpPartyRequest) returns (WarpPartyResponse);
+    rpc SendPartyChat(SendPartyChatRequest) returns (Empty);
+
+    // --- Lockdown ---
+    rpc GetLockdown(GetLockdownRequest) returns (LockdownState);
+    rpc SetLockdown(LockdownState) returns (LockdownState);
+    rpc CheckLockdown(CheckLockdownRequest) returns (CheckLockdownResponse);
+
+    // --- Command Blocker ---
+    rpc ListCommandBlockRules(ListCommandBlockRulesRequest) returns (ListCommandBlockRulesResponse);
+    rpc UpsertCommandBlockRule(CommandBlockRule) returns (CommandBlockRule);
+    rpc DeleteCommandBlockRule(DeleteCommandBlockRuleRequest) returns (Empty);
+
+    // --- Browser push notifications ---
+    rpc GetWebPushPublicKey(GetWebPushPublicKeyRequest) returns (GetWebPushPublicKeyResponse);
+    rpc SaveWebPushSubscription(WebPushSubscription) returns (WebPushSubscription);
+    rpc DeleteWebPushSubscription(DeleteWebPushSubscriptionRequest) returns (Empty);
+    rpc ListWebPushSubscriptions(ListWebPushSubscriptionsRequest) returns (ListWebPushSubscriptionsResponse);
+    rpc SendTestWebPush(SendTestWebPushRequest) returns (SendTestWebPushResponse);
+
+    // --- Custom placeholders ---
+    rpc ListCustomPlaceholders(ListCustomPlaceholdersRequest) returns (ListCustomPlaceholdersResponse);
+    rpc UpsertCustomPlaceholder(CustomPlaceholder) returns (CustomPlaceholder);
+    rpc DeleteCustomPlaceholder(DeleteCustomPlaceholderRequest) returns (Empty);
+
     // --- Tickets ---
     rpc CreateTicket(CreateTicketRequest) returns (Ticket);
     rpc GetTicket(GetTicketRequest) returns (Ticket);
@@ -1395,6 +1442,135 @@ message DeleteMailRequest { int64 id = 1; }
 message ClearReadMailRequest { string recipient_uuid = 1; }
 message GetUnreadMailCountRequest { string recipient_uuid = 1; }
 message GetUnreadMailCountResponse { int32 count = 1; }
+
+// --- Friends ---
+// Players are named by username in requests (resolved by NexusCore against
+// player profiles); failures come back as FAILED_PRECONDITION / NOT_FOUND with
+// a player-readable description.
+message SendFriendRequestRequest {
+    string sender_uuid = 1;
+    string sender_name = 2;
+    string target_name = 3;
+    string network_id = 4;
+}
+message SendFriendRequestResponse {
+    bool accepted = 1;                 // true when a pending reverse request was auto-accepted
+    string target_uuid = 2;
+    string target_name = 3;
+}
+message RespondFriendRequestRequest {
+    string player_uuid = 1;
+    string sender_name = 2;            // whose request is being answered
+    bool accept = 3;
+    string network_id = 4;
+}
+message RemoveFriendRequest {
+    string player_uuid = 1;
+    string friend_name = 2;
+    string network_id = 3;
+}
+message FriendActionResponse {
+    string other_uuid = 1;
+    string other_name = 2;
+}
+message ListFriendsRequest { string player_uuid = 1; }
+message ListFriendsResponse { repeated Friend friends = 1; }
+message ListFriendRequestsRequest { string player_uuid = 1; }
+message ListFriendRequestsResponse {
+    repeated FriendRequest incoming = 1;
+    repeated FriendRequest outgoing = 2;
+}
+message GetFriendSettingsRequest { string player_uuid = 1; }
+
+// --- Parties ---
+message CreatePartyRequest {
+    string leader_uuid = 1;
+    string leader_name = 2;
+    string network_id = 3;
+}
+message GetPartyRequest { string player_uuid = 1; }
+message GetPartyResponse {
+    bool in_party = 1;
+    Party party = 2;
+    repeated PartyInvite pending_invites = 3;  // invites addressed to this player
+}
+message ListPartiesRequest { string network_id = 1; }
+message ListPartiesResponse { repeated Party parties = 1; }
+message InviteToPartyRequest {
+    string inviter_uuid = 1;
+    string inviter_name = 2;
+    string target_name = 3;
+    string network_id = 4;             // creates the inviter's party if needed
+}
+message AcceptPartyInviteRequest {
+    string player_uuid = 1;
+    string player_name = 2;
+    string inviter_name = 3;
+}
+message DeclinePartyInviteRequest {
+    string player_uuid = 1;
+    string inviter_name = 2;
+}
+message JoinPartyRequest {
+    string player_uuid = 1;
+    string player_name = 2;
+    string leader_name = 3;            // must lead an open party
+}
+message LeavePartyRequest { string player_uuid = 1; }
+message KickFromPartyRequest {
+    string leader_uuid = 1;
+    string target_name = 2;
+}
+message TransferPartyLeaderRequest {
+    string leader_uuid = 1;
+    string target_name = 2;
+}
+message DisbandPartyRequest { string leader_uuid = 1; }
+message SetPartyOpenRequest {
+    string leader_uuid = 1;
+    bool open = 2;
+}
+message WarpPartyRequest { string leader_uuid = 1; }
+message WarpPartyResponse {
+    int32 warped = 1;
+    string server_name = 2;
+}
+message SendPartyChatRequest {
+    string sender_uuid = 1;
+    string sender_name = 2;
+    string message = 3;
+}
+
+// --- Lockdown ---
+message GetLockdownRequest { string network_id = 1; }
+message CheckLockdownRequest {
+    string network_id = 1;
+    string uuid = 2;
+    bool can_bypass = 3;               // caller holds nexuscontrol.lockdown.bypass
+}
+message CheckLockdownResponse {
+    bool blocked = 1;
+    string message = 2;                // kick text (MiniMessage) when blocked
+}
+
+// --- Command Blocker ---
+message ListCommandBlockRulesRequest { string network_id = 1; }
+message ListCommandBlockRulesResponse { repeated CommandBlockRule rules = 1; }
+message DeleteCommandBlockRuleRequest { int64 id = 1; }
+
+// --- Browser push notifications ---
+message GetWebPushPublicKeyRequest {}
+message GetWebPushPublicKeyResponse { string public_key = 1; }   // VAPID application server key (base64url)
+message DeleteWebPushSubscriptionRequest { string endpoint = 1; }
+message ListWebPushSubscriptionsRequest { string staff_uuid = 1; }
+message ListWebPushSubscriptionsResponse { repeated WebPushSubscription subscriptions = 1; }
+message SendTestWebPushRequest { string staff_uuid = 1; }
+message SendTestWebPushResponse { int32 sent = 1; }
+
+// --- Custom placeholders ---
+message ListCustomPlaceholdersRequest { string network_id = 1; }
+message ListCustomPlaceholdersResponse { repeated CustomPlaceholder placeholders = 1; }
+message DeleteCustomPlaceholderRequest { int64 id = 1; }
 
 // --- Tickets ---
 message CreateTicketRequest {

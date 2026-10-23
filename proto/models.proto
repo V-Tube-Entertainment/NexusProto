@@ -381,6 +381,117 @@ message PlayerMail {
 }
 
 // ============================================================
+// Friends & Parties
+// ============================================================
+
+message Friend {
+    string uuid = 1;
+    string username = 2;
+    bool online = 3;
+    string server_name = 4;            // current server when online
+    google.protobuf.Timestamp since = 5;
+    google.protobuf.Timestamp last_seen = 6;
+}
+
+message FriendRequest {
+    int64 id = 1;
+    string sender_uuid = 2;
+    string sender_name = 3;
+    string target_uuid = 4;
+    string target_name = 5;
+    google.protobuf.Timestamp created_at = 6;
+}
+
+message FriendSettings {
+    string player_uuid = 1;
+    bool accept_requests = 2;          // false = nobody can send this player requests
+    bool notify_status = 3;            // friend join/leave alerts
+}
+
+message PartyMember {
+    string uuid = 1;
+    string username = 2;
+    bool online = 3;
+    string server_name = 4;
+    google.protobuf.Timestamp joined_at = 5;
+}
+
+message Party {
+    int64 id = 1;
+    string network_id = 2;
+    string leader_uuid = 3;
+    string leader_name = 4;
+    repeated PartyMember members = 5;  // includes the leader
+    bool open = 6;                     // anyone may /party join
+    google.protobuf.Timestamp created_at = 7;
+    int32 max_size = 8;
+}
+
+message PartyInvite {
+    int64 party_id = 1;
+    string inviter_uuid = 2;
+    string inviter_name = 3;
+    string target_uuid = 4;
+    string target_name = 5;
+    google.protobuf.Timestamp expires_at = 6;
+}
+
+// ============================================================
+// Lockdown & Command Blocker
+// ============================================================
+
+message LockdownState {
+    string network_id = 1;
+    bool enabled = 2;
+    string mode = 3;                   // ALL (bypass holders only) | NEW (block first-time joins)
+    string reason = 4;
+    string set_by = 5;
+    google.protobuf.Timestamp since = 6;
+    bool kick_online = 7;              // on enable (mode ALL): kick online players without bypass
+}
+
+message CommandBlockRule {
+    int64 id = 1;
+    string network_id = 2;
+    string pattern = 3;                // command label, `*` wildcard, optional namespace (e.g. `pl`, `bukkit:*`, `ver*`)
+    string servers = 4;                // comma-separated server patterns; empty = everywhere
+    string message = 5;                // MiniMessage shown on block; empty = default
+    bool hide_tab_complete = 6;        // also hide from the client's command list
+    string bypass_permission = 7;      // empty = nexuscontrol.commandblock.bypass
+    bool enabled = 8;
+    google.protobuf.Timestamp created_at = 9;
+}
+
+// ============================================================
+// Browser (Web Push) notifications
+// ============================================================
+
+message WebPushSubscription {
+    int64 id = 1;
+    string staff_uuid = 2;
+    string endpoint = 3;               // push service URL from PushSubscription.endpoint
+    string p256dh = 4;                 // PushSubscription keys
+    string auth = 5;
+    string user_agent = 6;
+    bool punishments = 7;              // bans, mutes, kicks, warns
+    bool tickets = 8;                  // new tickets
+    bool reports = 9;                  // new player reports
+    google.protobuf.Timestamp created_at = 10;
+}
+
+// Staff-defined placeholder: %nexus_custom_<name>% (or %nexus_<name>% when it
+// doesn't clash with a built-in) renders `value`, which may itself use other
+// %nexus_...% placeholders and MiniMessage.
+message CustomPlaceholder {
+    int64 id = 1;
+    string network_id = 2;
+    string name = 3;                   // [a-z0-9_]{1,48}
+    string value = 4;
+    string description = 5;
+    google.protobuf.Timestamp updated_at = 6;
+}
+
+// ============================================================
 // Announcements & Maintenance
 // ============================================================
 
